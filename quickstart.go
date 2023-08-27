@@ -115,7 +115,11 @@ func main() {
             fmt.Printf("Error retrieving message: %v", err)
             return
         }
-        fmt.Println(msg.Snippet)
+        for _,h := range msg.Payload.Headers {
+            if h.Name == "Subject" {
+                fmt.Println(h.Value)
+            }
+        }
 	}
 
 }
