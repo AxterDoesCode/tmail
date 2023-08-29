@@ -15,14 +15,23 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to retrieve labels: %v", err)
 	}
+
 	if len(r.Labels) == 0 {
 		fmt.Println("No labels found.")
 		return
 	}
+
 	fmt.Println("Labels:")
 	for _, l := range r.Labels {
 		fmt.Printf("- %s\n", l.Name)
 	}
-    scraper.MessageScraper(&user)
-    fmt.Println("Finished scraper exec")
+
+	go scraper.MessageScraper(&user)
+	for {
+		select {
+		case msg := <-user.MsgRecvChan:
+			user.Cache.AddToMessageCache(msg)
+			fmt.Println("Added message", msg)
+		}
+	}
 }

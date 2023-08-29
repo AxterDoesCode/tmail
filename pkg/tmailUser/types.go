@@ -12,8 +12,9 @@ import (
 )
 
 type User struct {
-	Srv   *gmail.Service
-	Cache tmailcache.Cache
+	Srv         *gmail.Service
+	Cache       tmailcache.Cache
+	MsgRecvChan chan tmailcache.MsgCacheEntry
 }
 
 func NewUser() User {
@@ -35,8 +36,9 @@ func NewUser() User {
 		log.Fatalf("Unable to retrieve Gmail client: %v", err)
 	}
 
-    return User{
-        Srv: srv,
-        Cache: tmailcache.NewCache() ,
-    }
+	return User{
+		Srv:   srv,
+		Cache: tmailcache.NewCache(),
+        MsgRecvChan: make(chan tmailcache.MsgCacheEntry),
+	}
 }
