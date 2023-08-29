@@ -21,9 +21,7 @@ func (user *User) messageScraper(concurrency int, maxResults int64) {
 
 	wg := sync.WaitGroup{}
 	semaphore := make(chan struct{}, concurrency)
-    counter := 0
 	for _, m := range messages.Messages {
-        counter++
 		wg.Add(1)
 		semaphore <- struct{}{}
 		go func(m *gmail.Message) {
@@ -32,7 +30,6 @@ func (user *User) messageScraper(concurrency int, maxResults int64) {
 		}(m)
 	}
 	wg.Wait()
-    fmt.Println("Counter is: ", counter)
 }
 
 func (user *User) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) {
