@@ -8,6 +8,8 @@ import (
 	tmailuser "github.com/AxterDoesCode/tmail/pkg/tmailUser"
 )
 
+const concurrency int = 5
+
 func main() {
 	user := tmailuser.NewUser()
 
@@ -26,12 +28,8 @@ func main() {
 		fmt.Printf("- %s\n", l.Name)
 	}
 
-	go scraper.MessageScraper(&user)
-	for {
-		select {
-		case msg := <-user.MsgRecvChan:
-			user.Cache.AddToMessageCache(msg)
-			fmt.Println("Added message", msg)
-		}
-	}
+	go scraper.MessageScraper(&user, concurrency)
+    for {
+
+    }
 }
