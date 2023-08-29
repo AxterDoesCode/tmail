@@ -12,25 +12,24 @@ import (
 )
 
 func MessageScraper(user *tmailuser.User, concurrency int) {
-	messages, err := user.Srv.Users.Messages.List("me").MaxResults(1).Do()
+	messages, err := user.Srv.Users.Messages.List("me").PageToken(user.MsgPageToken).MaxResults(5).Do()
 	if err != nil {
-		log.Fatalf("Unable to retrieve messages: %v", err)
-		fmt.Println("unable to retrieve")
+		log.Printf("Unable to retrieve messages: %v\n", err)
 		return
 	}
-
-	fmt.Println("Message subjects:")
-	fmt.Printf("Number of messages %v\n", len(messages.Messages))
+    user.MsgPageToken = messages.NextPageToken
+	//fmt.Printf("Number of messages %v\n", len(messages.Messages))
 
 	wg := sync.WaitGroup{}
 	semaphore := make(chan struct{}, concurrency)
 
+    //goroutine which adds messages received to the cache sequentially
 	go func() {
 		for {
 			select {
 			case msg := <-user.MsgRecvChan:
 				user.Cache.AddToMessageCache(msg)
-				fmt.Println("Added message: ", msg.Id)
+				fmt.Println(msg.Id)
 			}
 		}
 	}()
@@ -43,7 +42,9 @@ func MessageScraper(user *tmailuser.User, concurrency int) {
 			scrapeMessage(m, user, &wg)
 		}(m)
 	}
+
 	wg.Wait()
+    fmt.Println("Next pagetoken is: ", user.MsgPageToken)
 }
 
 func scrapeMessage(m *gmail.Message, user *tmailuser.User, wg *sync.WaitGroup) {
@@ -55,8 +56,11 @@ func scrapeMessage(m *gmail.Message, user *tmailuser.User, wg *sync.WaitGroup) {
 	}
 
 	MessageEntry := tmailcache.MsgCacheEntry{}
+
 	MessageEntry.Id = msg.Id
-	MessageEntry.Body = msg.Payload.Body.Data
+	decodedBody, err := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
+	MessageEntry.Body = string(decodedBody)
+
 	for _, h := range msg.Payload.Headers {
 		switch h.Name {
 		case "Subject":
@@ -65,20 +69,27 @@ func scrapeMessage(m *gmail.Message, user *tmailuser.User, wg *sync.WaitGroup) {
 			MessageEntry.To = h.Value
 		case "From":
 			MessageEntry.From = h.Value
+		case "Content-Type":
+			MessageEntry.ContentType = h.Value
 		}
 	}
-
-	res, err := user.Srv.Users.Messages.Get("me", m.Id).Format("RAW").Do()
-	if err != nil {
-        log.Println("Error when getting raw mail content: ", err)
-		return
-	}
-    decodedData, err := base64.URLEncoding.DecodeString(res.Raw)
-    if err != nil {
-        log.Println("Error decoding raw message body: ", err)
-        return
-    }
-    fmt.Printf("- %s\n", decodedData)
+	//I need to handle non plaintext content sometime
+	//probably by getting the raw data and parsing the html
 
 	user.MsgRecvChan <- MessageEntry
+}
+
+func getRawMessageData(m *gmail.Message, user *tmailuser.User) {
+	res, err := user.Srv.Users.Messages.Get("me", m.Id).Format("RAW").Do()
+	if err != nil {
+		log.Println("Error when getting raw mail content: ", err)
+		return
+	}
+	decodedData, err := base64.URLEncoding.DecodeString(res.Raw)
+	if err != nil {
+		log.Println("Error decoding raw message body: ", err)
+		return
+	}
+
+	fmt.Printf("- %s\n", decodedData)
 }

@@ -2,6 +2,7 @@ package tmailuser
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -12,9 +13,10 @@ import (
 )
 
 type User struct {
-	Srv         *gmail.Service
-	Cache       tmailcache.Cache
-	MsgRecvChan chan tmailcache.MsgCacheEntry
+	Srv          *gmail.Service
+	Cache        tmailcache.Cache
+	MsgRecvChan  chan tmailcache.MsgCacheEntry
+	MsgPageToken string
 }
 
 func NewUser() User {
@@ -37,8 +39,19 @@ func NewUser() User {
 	}
 
 	return User{
-		Srv:   srv,
-		Cache: tmailcache.NewCache(),
-        MsgRecvChan: make(chan tmailcache.MsgCacheEntry),
+		Srv:         srv,
+		Cache:       tmailcache.NewCache(),
+		MsgRecvChan: make(chan tmailcache.MsgCacheEntry),
+	}
+}
+
+func (u *User) Listen() {
+    //goroutine which adds messages received to the cache sequentially
+	for {
+		select {
+		case msg := <-u.MsgRecvChan:
+			u.Cache.AddToMessageCache(msg)
+			fmt.Println(msg.Id)
+		}
 	}
 }

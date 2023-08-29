@@ -5,11 +5,12 @@ type Cache struct {
 }
 
 type MsgCacheEntry struct {
-	Id      string
-	To      string
-	From    string
-	Subject string
-	Body    string
+	Id          string
+	To          string
+	From        string
+	Subject     string
+	ContentType string
+	Body        string
 }
 
 func NewCache() Cache {
