@@ -13,10 +13,11 @@ import (
 )
 
 type User struct {
-	Srv          *gmail.Service
-	Cache        tmailcache.Cache
-	MsgRecvChan  chan tmailcache.MsgCacheEntry
-	MsgPageToken string
+	Srv             *gmail.Service
+	Cache           tmailcache.Cache
+	MsgRecvChan     chan tmailcache.MsgCacheEntry
+	MsgNextPageChan chan bool
+	MsgPageToken    string
 }
 
 func NewUser() User {
@@ -39,19 +40,33 @@ func NewUser() User {
 	}
 
 	return User{
-		Srv:         srv,
-		Cache:       tmailcache.NewCache(),
-		MsgRecvChan: make(chan tmailcache.MsgCacheEntry),
+		Srv:             srv,
+		Cache:           tmailcache.NewCache(),
+		MsgRecvChan:     make(chan tmailcache.MsgCacheEntry),
+		MsgNextPageChan: make(chan bool),
 	}
 }
 
 func (u *User) Listen() {
-    //goroutine which adds messages received to the cache sequentially
+	//goroutine which adds messages received to the cache sequentially
+    go u.listenForNextPage()
+    go u.listenForMsgReceive()
+}
+
+func (u *User) listenForNextPage() {
+	for {
+		if <-u.MsgNextPageChan {
+			u.messageScraper(10, 50)
+		}
+	}
+}
+
+func (u *User) listenForMsgReceive() {
 	for {
 		select {
 		case msg := <-u.MsgRecvChan:
 			u.Cache.AddToMessageCache(msg)
-			fmt.Println(msg.Id)
+			fmt.Println(msg.Subject)
 		}
 	}
 }

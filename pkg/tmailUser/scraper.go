@@ -1,4 +1,4 @@
-package scraper
+package tmailuser
 
 import (
 	"encoding/base64"
@@ -7,47 +7,35 @@ import (
 	"sync"
 
 	tmailcache "github.com/AxterDoesCode/tmail/pkg/tmailCache"
-	tmailuser "github.com/AxterDoesCode/tmail/pkg/tmailUser"
 	"google.golang.org/api/gmail/v1"
 )
 
-func MessageScraper(user *tmailuser.User, concurrency int) {
-	messages, err := user.Srv.Users.Messages.List("me").PageToken(user.MsgPageToken).MaxResults(5).Do()
+func (user *User) messageScraper(concurrency int, maxResults int64) {
+	messages, err := user.Srv.Users.Messages.List("me").PageToken(user.MsgPageToken).MaxResults(maxResults).Do()
 	if err != nil {
 		log.Printf("Unable to retrieve messages: %v\n", err)
 		return
 	}
-    user.MsgPageToken = messages.NextPageToken
+	user.MsgPageToken = messages.NextPageToken
 	//fmt.Printf("Number of messages %v\n", len(messages.Messages))
 
 	wg := sync.WaitGroup{}
 	semaphore := make(chan struct{}, concurrency)
-
-    //goroutine which adds messages received to the cache sequentially
-	go func() {
-		for {
-			select {
-			case msg := <-user.MsgRecvChan:
-				user.Cache.AddToMessageCache(msg)
-				fmt.Println(msg.Id)
-			}
-		}
-	}()
-
+    counter := 0
 	for _, m := range messages.Messages {
+        counter++
 		wg.Add(1)
 		semaphore <- struct{}{}
 		go func(m *gmail.Message) {
 			defer func() { <-semaphore }()
-			scrapeMessage(m, user, &wg)
+			user.scrapeMessage(m, &wg)
 		}(m)
 	}
-
 	wg.Wait()
-    fmt.Println("Next pagetoken is: ", user.MsgPageToken)
+    fmt.Println("Counter is: ", counter)
 }
 
-func scrapeMessage(m *gmail.Message, user *tmailuser.User, wg *sync.WaitGroup) {
+func (user *User) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) {
 	defer wg.Done()
 	msg, err := user.Srv.Users.Messages.Get("me", m.Id).Do()
 	if err != nil {
@@ -79,7 +67,7 @@ func scrapeMessage(m *gmail.Message, user *tmailuser.User, wg *sync.WaitGroup) {
 	user.MsgRecvChan <- MessageEntry
 }
 
-func getRawMessageData(m *gmail.Message, user *tmailuser.User) {
+func (user *User) getRawMessageData(m *gmail.Message) {
 	res, err := user.Srv.Users.Messages.Get("me", m.Id).Format("RAW").Do()
 	if err != nil {
 		log.Println("Error when getting raw mail content: ", err)
