@@ -1,4 +1,4 @@
-package tmailuser
+package tmailclient
 
 import (
 	"context"

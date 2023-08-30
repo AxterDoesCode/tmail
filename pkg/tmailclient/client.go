@@ -1,4 +1,4 @@
-package tmailuser
+package tmailclient
 
 import (
 	"context"
@@ -12,15 +12,15 @@ import (
 	"google.golang.org/api/option"
 )
 
-type User struct {
-	Srv             *gmail.Service
-	Cache           tmailcache.Cache
+type Client struct {
+	Srv *gmail.Service
+	tmailcache.Cache
 	MsgRecvChan     chan tmailcache.MsgCacheEntry
 	MsgNextPageChan chan bool
 	MsgPageToken    string
 }
 
-func NewUser() User {
+func NewClient() Client {
 	ctx := context.Background()
 	b, err := os.ReadFile("./credentials.json")
 	if err != nil {
@@ -39,7 +39,8 @@ func NewUser() User {
 		log.Fatalf("Unable to retrieve Gmail client: %v", err)
 	}
 
-	return User{
+
+	return Client{
 		Srv:             srv,
 		Cache:           tmailcache.NewCache(),
 		MsgRecvChan:     make(chan tmailcache.MsgCacheEntry),
@@ -47,26 +48,27 @@ func NewUser() User {
 	}
 }
 
-func (u *User) Listen() {
+func (c *Client) Listen() {
 	//goroutine which adds messages received to the cache sequentially
-    go u.listenForNextPage()
-    go u.listenForMsgReceive()
+	go c.listenForNextPage()
+	go c.listenForMsgReceive()
 }
 
-func (u *User) listenForNextPage() {
+func (c *Client) listenForNextPage() {
 	for {
-		if <-u.MsgNextPageChan {
-			u.messageScraper(10, 50)
+		if <-c.MsgNextPageChan {
+			c.messageScraper(10, 50)
 		}
 	}
 }
 
-func (u *User) listenForMsgReceive() {
+func (c *Client) listenForMsgReceive() {
 	for {
 		select {
-		case msg := <-u.MsgRecvChan:
-			u.Cache.AddToMessageCache(msg)
-			fmt.Println(msg.Subject)
+		case msg := <-c.MsgRecvChan:
+			c.Cache.AddToMessageCache(msg)
+            fmt.Println(msg.Subject)
 		}
 	}
 }
+

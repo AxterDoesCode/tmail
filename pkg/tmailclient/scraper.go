@@ -1,4 +1,4 @@
-package tmailuser
+package tmailclient
 
 import (
 	"encoding/base64"
@@ -10,13 +10,13 @@ import (
 	"google.golang.org/api/gmail/v1"
 )
 
-func (user *User) messageScraper(concurrency int, maxResults int64) {
-	messages, err := user.Srv.Users.Messages.List("me").PageToken(user.MsgPageToken).MaxResults(maxResults).Do()
+func (c *Client) messageScraper(concurrency int, maxResults int64) {
+	messages, err := c.Srv.Users.Messages.List("me").PageToken(c.MsgPageToken).MaxResults(maxResults).Do()
 	if err != nil {
 		log.Printf("Unable to retrieve messages: %v\n", err)
 		return
 	}
-	user.MsgPageToken = messages.NextPageToken
+	c.MsgPageToken = messages.NextPageToken
 	//fmt.Printf("Number of messages %v\n", len(messages.Messages))
 
 	wg := sync.WaitGroup{}
@@ -26,15 +26,15 @@ func (user *User) messageScraper(concurrency int, maxResults int64) {
 		semaphore <- struct{}{}
 		go func(m *gmail.Message) {
 			defer func() { <-semaphore }()
-			user.scrapeMessage(m, &wg)
+			c.scrapeMessage(m, &wg)
 		}(m)
 	}
 	wg.Wait()
 }
 
-func (user *User) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) {
+func (c *Client) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) {
 	defer wg.Done()
-	msg, err := user.Srv.Users.Messages.Get("me", m.Id).Do()
+	msg, err := c.Srv.Users.Messages.Get("me", m.Id).Do()
 	if err != nil {
 		fmt.Printf("Error retrieving message: %v", err)
 		return
@@ -61,15 +61,16 @@ func (user *User) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) {
 	//I need to handle non plaintext content sometime
 	//probably by getting the raw data and parsing the html
 
-	user.MsgRecvChan <- MessageEntry
+	c.MsgRecvChan <- MessageEntry
 }
 
-func (user *User) getRawMessageData(m *gmail.Message) {
-	res, err := user.Srv.Users.Messages.Get("me", m.Id).Format("RAW").Do()
+func (c *Client) getRawMessageData(m *gmail.Message) {
+	res, err := c.Srv.Users.Messages.Get("me", m.Id).Format("RAW").Do()
 	if err != nil {
 		log.Println("Error when getting raw mail content: ", err)
 		return
 	}
+
 	decodedData, err := base64.URLEncoding.DecodeString(res.Raw)
 	if err != nil {
 		log.Println("Error decoding raw message body: ", err)

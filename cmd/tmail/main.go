@@ -1,17 +1,15 @@
 package main
 
 import (
-	tmailuser "github.com/AxterDoesCode/tmail/pkg/tmailUser"
+	"github.com/AxterDoesCode/tmail/pkg/tmailclient"
 )
 
-
 func main() {
-	user := tmailuser.NewUser()
+	client := tmailclient.NewClient()
 
-    go user.Listen()
-    user.MsgNextPageChan <- true
-    user.MsgNextPageChan <- true
-    for {
-
-    }
+	go client.Listen()
+    client.MsgNextPageChan <- true
+    for{}
+	//This shows that next page trigger works, should refactor to be struct{}{} instead of true
+	//Also should probably do a waitgroup instead of a shitty for loop actually maybe not because the cli app will be blocking
 }
