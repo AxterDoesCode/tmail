@@ -2,11 +2,11 @@ package tmailclient
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
 	tmailcache "github.com/AxterDoesCode/tmail/pkg/tmailCache"
+	"github.com/awesome-gocui/gocui"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
@@ -14,10 +14,12 @@ import (
 
 type Client struct {
 	Srv *gmail.Service
+	*gocui.Gui
 	tmailcache.Cache
 	MsgRecvChan     chan tmailcache.MsgCacheEntry
 	MsgNextPageChan chan bool
 	MsgPageToken    string
+    RefreshGuiChan  chan struct {}
 }
 
 func NewClient() Client {
@@ -39,12 +41,18 @@ func NewClient() Client {
 		log.Fatalf("Unable to retrieve Gmail client: %v", err)
 	}
 
+    g, err := gocui.NewGui(gocui.OutputNormal, true)
+    if err != nil {
+        return Client{}
+    }
 
 	return Client{
 		Srv:             srv,
 		Cache:           tmailcache.NewCache(),
 		MsgRecvChan:     make(chan tmailcache.MsgCacheEntry),
 		MsgNextPageChan: make(chan bool),
+        RefreshGuiChan: make(chan struct{}),
+        Gui: g,
 	}
 }
 
@@ -67,8 +75,7 @@ func (c *Client) listenForMsgReceive() {
 		select {
 		case msg := <-c.MsgRecvChan:
 			c.Cache.AddToMessageCache(msg)
-            fmt.Println(msg.Subject)
+            c.RefreshGuiChan <- struct{}{}
 		}
 	}
 }
-

@@ -8,6 +8,7 @@ func main() {
 	client := tmailclient.NewClient()
 
 	go client.Listen()
+    go client.StartCui()
     client.MsgNextPageChan <- true
     for{}
 	//This shows that next page trigger works, should refactor to be struct{}{} instead of true
