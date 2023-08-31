@@ -20,7 +20,7 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
     c.MsgPageTokenMap[c.MsgPageTokenIndex + 1] = messages.NextPageToken
 
     //Reset the content to be displayed
-	c.MsgCacheDisplay = make(map[string]tmailcache.MsgCacheEntry)
+	c.MsgCacheDisplay = []tmailcache.MsgCacheEntry{}
 	wg := sync.WaitGroup{}
 	semaphore := make(chan struct{}, concurrency)
 	for _, m := range messages.Messages {

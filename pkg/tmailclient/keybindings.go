@@ -15,10 +15,13 @@ func (c *Client) keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("", gocui.KeyCtrlR, gocui.ModNone, c.refreshEmails); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("main", 'j', gocui.ModNone, cursorMovement(1)); err != nil {
+	if err := g.SetKeybinding("side", 'j', gocui.ModNone, cursorMovement(1)); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("main", 'k', gocui.ModNone, cursorMovement(-1)); err != nil {
+	if err := g.SetKeybinding("side", 'k', gocui.ModNone, cursorMovement(-1)); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("side", gocui.KeyEnter, gocui.ModNone, c.getBody); err != nil {
 		return err
 	}
 	return nil

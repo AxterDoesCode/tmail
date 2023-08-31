@@ -1,6 +1,7 @@
 package tmailclient
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/awesome-gocui/gocui"
@@ -51,4 +52,15 @@ func lineBelow(v *gocui.View, d int) bool {
 	_, y := v.Cursor()
 	line, err := v.Line(y + d)
 	return err == nil && line != ""
+}
+
+func (c *Client) getBody(g *gocui.Gui, v *gocui.View) error {
+	_, y := v.Cursor()
+    v, err := g.View("main")
+    if err != nil {
+        return err
+    }
+    v.Clear()
+    fmt.Fprintln(v, c.MsgCacheDisplay[y].Body)
+	return nil
 }

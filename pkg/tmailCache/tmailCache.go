@@ -5,7 +5,7 @@ import "sync"
 type Cache struct {
     MsgCacheMu sync.Mutex
 	MsgCache map[string]MsgCacheEntry
-    MsgCacheDisplay map[string]MsgCacheEntry
+    MsgCacheDisplay []MsgCacheEntry
 }
 
 type MsgCacheEntry struct {
@@ -20,7 +20,7 @@ type MsgCacheEntry struct {
 func NewCache() Cache {
 	return Cache{
 		MsgCache: make(map[string]MsgCacheEntry),
-        MsgCacheDisplay: make(map[string]MsgCacheEntry),
+        MsgCacheDisplay: []MsgCacheEntry{},
 	}
 }
 
@@ -29,5 +29,5 @@ func (c *Cache) AddToMessageCache(m *MsgCacheEntry) {
 }
 
 func (c *Cache) AddToMessageCacheDisplay(m *MsgCacheEntry) {
-	c.MsgCacheDisplay[m.Id] = *m
+    c.MsgCacheDisplay = append(c.MsgCacheDisplay, *m)
 }
