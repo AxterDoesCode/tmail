@@ -23,15 +23,6 @@ func layout(g *gocui.Gui) error {
 	return nil
 }
 
-func (c *Client) keybindings(g *gocui.Gui) error {
-	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlR, gocui.ModNone, c.nextPage); err != nil {
-		return err
-	}
-	return nil
-}
 
 func (c *Client) StartCui() {
 	g, err := gocui.NewGui(gocui.OutputNormal, true)
@@ -77,11 +68,3 @@ func (c *Client) redrawCui(g *gocui.Gui) error {
 	return nil
 }
 
-func quit(g *gocui.Gui, v *gocui.View) error {
-	return gocui.ErrQuit
-}
-
-func (c *Client) nextPage (g *gocui.Gui, v *gocui.View) error {
-    c.MsgNextPageChan <- struct{}{}
-    return nil
-}
