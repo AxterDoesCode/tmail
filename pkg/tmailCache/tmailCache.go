@@ -1,6 +1,9 @@
 package tmailcache
 
+import "sync"
+
 type Cache struct {
+    MsgCacheMu sync.Mutex
 	MsgCache map[string]MsgCacheEntry
 }
 
@@ -19,6 +22,6 @@ func NewCache() Cache {
 	}
 }
 
-func (c *Cache) AddToMessageCache(m MsgCacheEntry) {
-	c.MsgCache[m.Id] = m
+func (c *Cache) AddToMessageCache(m *MsgCacheEntry) {
+	c.MsgCache[m.Id] = *m
 }

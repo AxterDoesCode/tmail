@@ -26,24 +26,34 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 		semaphore <- struct{}{}
 		go func(m *gmail.Message) {
 			defer func() { <-semaphore }()
-			c.scrapeMessage(m, &wg)
+			msgEntry, err := c.scrapeMessage(m, &wg)
+			if err != nil {
+				log.Println(err)
+			}
+            c.MsgCacheMu.Lock()
+            c.AddToMessageCache(msgEntry)
+            c.MsgCacheMu.Unlock()
 		}(m)
 	}
 	wg.Wait()
+    c.RefreshGuiChan <- struct{}{}
 }
 
-func (c *Client) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) {
+func (c *Client) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache.MsgCacheEntry, error) {
 	defer wg.Done()
 	msg, err := c.Srv.Users.Messages.Get("me", m.Id).Do()
 	if err != nil {
-		fmt.Printf("Error retrieving message: %v", err)
-		return
+		log.Printf("Error retrieving message: %v", err)
+		return nil, err
 	}
 
 	MessageEntry := tmailcache.MsgCacheEntry{}
 
 	MessageEntry.Id = msg.Id
 	decodedBody, err := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
+	if err != nil {
+		return nil, err
+	}
 	MessageEntry.Body = string(decodedBody)
 
 	for _, h := range msg.Payload.Headers {
@@ -61,7 +71,7 @@ func (c *Client) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) {
 	//I need to handle non plaintext content sometime
 	//probably by getting the raw data and parsing the html
 
-	c.MsgRecvChan <- MessageEntry
+	return &MessageEntry, nil
 }
 
 func (c *Client) getRawMessageData(m *gmail.Message) {

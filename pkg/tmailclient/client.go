@@ -22,7 +22,7 @@ type Client struct {
 	RefreshGuiChan  chan struct{}
 }
 
-func NewClient() Client {
+func NewClient() *Client {
 	ctx := context.Background()
 	b, err := os.ReadFile("./credentials.json")
 	if err != nil {
@@ -41,25 +41,21 @@ func NewClient() Client {
 		log.Fatalf("Unable to retrieve Gmail client: %v", err)
 	}
 
-	g, err := gocui.NewGui(gocui.OutputNormal, true)
-	if err != nil {
-		return Client{}
-	}
 
-	return Client{
+    ret := &Client{
 		Srv:             srv,
 		Cache:           tmailcache.NewCache(),
 		MsgRecvChan:     make(chan tmailcache.MsgCacheEntry),
 		MsgNextPageChan: make(chan struct{}),
 		RefreshGuiChan:  make(chan struct{}),
-		Gui:             g,
 	}
+    go ret.Listen()
+    return ret
 }
 
 func (c *Client) Listen() {
 	//goroutine which adds messages received to the cache sequentially
 	go c.listenForNextPage()
-	go c.listenForMsgReceive()
 }
 
 func (c *Client) listenForNextPage() {
@@ -67,16 +63,6 @@ func (c *Client) listenForNextPage() {
 		select {
 		case <-c.MsgNextPageChan:
 			c.messageScraper(10, 20)
-		}
-	}
-}
-
-func (c *Client) listenForMsgReceive() {
-	for {
-		select {
-		case msg := <-c.MsgRecvChan:
-			c.Cache.AddToMessageCache(msg)
-			c.RefreshGuiChan <- struct{}{}
 		}
 	}
 }
