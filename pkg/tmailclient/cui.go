@@ -62,7 +62,8 @@ func (c *Client) redrawCui(g *gocui.Gui) error {
 		return err
 	}
 	v.Clear()
-	for _, val := range c.Cache.MsgCache {
+    //So it is clearing its just iterating over everything in the cache rather than the shit we want to display
+	for _, val := range c.Cache.MsgCacheDisplay {
 		fmt.Fprintf(v, "%s\n", val.Subject)
 	}
 	return nil

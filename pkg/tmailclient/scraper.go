@@ -17,7 +17,7 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 		return
 	}
 	c.MsgPageToken = messages.NextPageToken
-
+	c.MsgCacheDisplay = make(map[string]tmailcache.MsgCacheEntry)
 	wg := sync.WaitGroup{}
 	semaphore := make(chan struct{}, concurrency)
 	for _, m := range messages.Messages {
@@ -25,25 +25,29 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 		semaphore <- struct{}{}
 		go func(m *gmail.Message) {
 			defer func() { <-semaphore }()
-			msgEntry, err := c.scrapeMessage(m, &wg)
+			msgEntry, new, err := c.fetchMessage(m, &wg)
 			if err != nil {
 				log.Println(err)
+				return
 			}
-            c.MsgCacheMu.Lock()
-            c.AddToMessageCache(msgEntry)
-            c.MsgCacheMu.Unlock()
+			c.MsgCacheMu.Lock()
+			if new {
+				c.AddToMessageCache(msgEntry)
+			}
+			c.AddToMessageCacheDisplay(msgEntry)
+			c.MsgCacheMu.Unlock()
 		}(m)
 	}
 	wg.Wait()
-    c.RefreshGuiChan <- struct{}{}
+	c.RefreshGuiChan <- struct{}{}
 }
 
-func (c *Client) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache.MsgCacheEntry, error) {
+func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache.MsgCacheEntry, bool, error) {
 	defer wg.Done()
 	msg, err := c.Srv.Users.Messages.Get("me", m.Id).Do()
 	if err != nil {
 		log.Printf("Error retrieving message: %v", err)
-		return nil, err
+		return nil, false, err
 	}
 
 	MessageEntry := tmailcache.MsgCacheEntry{}
@@ -51,7 +55,7 @@ func (c *Client) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcach
 	MessageEntry.Id = msg.Id
 	decodedBody, err := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	MessageEntry.Body = string(decodedBody)
 
@@ -70,7 +74,7 @@ func (c *Client) scrapeMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcach
 	//I need to handle non plaintext content sometime
 	//probably by getting the raw data and parsing the html
 
-	return &MessageEntry, nil
+	return &MessageEntry, true, nil
 }
 
 func (c *Client) getRawMessageData(m *gmail.Message) {
