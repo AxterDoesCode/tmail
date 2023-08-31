@@ -17,9 +17,9 @@ type Client struct {
 	*gocui.Gui
 	tmailcache.Cache
 	MsgRecvChan     chan tmailcache.MsgCacheEntry
-	MsgNextPageChan chan bool
+	MsgNextPageChan chan struct{}
 	MsgPageToken    string
-    RefreshGuiChan  chan struct {}
+	RefreshGuiChan  chan struct{}
 }
 
 func NewClient() Client {
@@ -41,18 +41,18 @@ func NewClient() Client {
 		log.Fatalf("Unable to retrieve Gmail client: %v", err)
 	}
 
-    g, err := gocui.NewGui(gocui.OutputNormal, true)
-    if err != nil {
-        return Client{}
-    }
+	g, err := gocui.NewGui(gocui.OutputNormal, true)
+	if err != nil {
+		return Client{}
+	}
 
 	return Client{
 		Srv:             srv,
 		Cache:           tmailcache.NewCache(),
 		MsgRecvChan:     make(chan tmailcache.MsgCacheEntry),
-		MsgNextPageChan: make(chan bool),
-        RefreshGuiChan: make(chan struct{}),
-        Gui: g,
+		MsgNextPageChan: make(chan struct{}),
+		RefreshGuiChan:  make(chan struct{}),
+		Gui:             g,
 	}
 }
 
@@ -64,8 +64,9 @@ func (c *Client) Listen() {
 
 func (c *Client) listenForNextPage() {
 	for {
-		if <-c.MsgNextPageChan {
-			c.messageScraper(10, 50)
+		select {
+		case <-c.MsgNextPageChan:
+			c.messageScraper(10, 20)
 		}
 	}
 }
@@ -75,7 +76,7 @@ func (c *Client) listenForMsgReceive() {
 		select {
 		case msg := <-c.MsgRecvChan:
 			c.Cache.AddToMessageCache(msg)
-            c.RefreshGuiChan <- struct{}{}
+			c.RefreshGuiChan <- struct{}{}
 		}
 	}
 }
