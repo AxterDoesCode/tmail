@@ -44,6 +44,13 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 
 func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache.MsgCacheEntry, bool, error) {
 	defer wg.Done()
+
+    //Checks if the entry already is in cache (the map)
+    //Maybe this needs to be changed because im creating a pointer of a value???
+    if k, ok := c.MsgCache[m.Id]; ok{
+        return &k, false, nil
+    }
+
 	msg, err := c.Srv.Users.Messages.Get("me", m.Id).Do()
 	if err != nil {
 		log.Printf("Error retrieving message: %v", err)
