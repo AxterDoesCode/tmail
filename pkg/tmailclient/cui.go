@@ -19,6 +19,9 @@ func layout(g *gocui.Gui) error {
 		v.SelBgColor = gocui.ColorGreen
 		v.SelFgColor = gocui.ColorBlack
 		fmt.Fprintln(v, "Loading Emails...")
+        if _, err := g.SetCurrentView("main"); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -65,7 +68,7 @@ func (c *Client) redrawCui(g *gocui.Gui) error {
 		return err
 	}
 	v.Clear()
-    //So it is clearing its just iterating over everything in the cache rather than the shit we want to display
+
 	for _, val := range c.Cache.MsgCacheDisplay {
 		fmt.Fprintf(v, "%s\n", val.Subject)
 	}
