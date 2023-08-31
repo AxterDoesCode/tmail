@@ -19,7 +19,9 @@ type Client struct {
 	MsgChangePageChan chan struct{}
 	MsgPageTokenMap   map[int]string
 	MsgPageTokenIndex int
+	MaxResults        int
 	RefreshGuiChan    chan struct{}
+    GuiStarted bool
 }
 
 func NewClient() *Client {
@@ -46,7 +48,8 @@ func NewClient() *Client {
 		Cache:             tmailcache.NewCache(),
 		MsgChangePageChan: make(chan struct{}),
 		RefreshGuiChan:    make(chan struct{}),
-        MsgPageTokenMap: make(map[int]string),
+		MsgPageTokenMap:   make(map[int]string),
+        GuiStarted: false,
 	}
 	go ret.Listen()
 	return ret
@@ -61,7 +64,7 @@ func (c *Client) listenForPageChange() {
 	for {
 		select {
 		case <-c.MsgChangePageChan:
-			c.messageScraper(20, 20)
+			c.messageScraper(c.MaxResults, int64(c.MaxResults))
 		}
 	}
 }

@@ -8,10 +8,15 @@ import (
 	"github.com/awesome-gocui/gocui"
 )
 
-func layout(g *gocui.Gui) error {
-	maxX, maxY := g.Size()
+func (c *Client) layout(g *gocui.Gui) error {
+    if !c.GuiStarted {
+        //Initial fetch
+        c.MsgChangePageChan <- struct{}{}
+        c.GuiStarted = true
+    }
+	_, c.MaxResults = g.Size()
 
-	if v, err := g.SetView("main", -1, -1, maxX, maxY, 0); err != nil {
+	if v, err := g.SetView("main", -1, -1, 40, c.MaxResults, 0); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -19,13 +24,12 @@ func layout(g *gocui.Gui) error {
 		v.SelBgColor = gocui.ColorGreen
 		v.SelFgColor = gocui.ColorBlack
 		fmt.Fprintln(v, "Loading Emails...")
-        if _, err := g.SetCurrentView("main"); err != nil {
+		if _, err := g.SetCurrentView("main"); err != nil {
 			return err
 		}
 	}
 	return nil
 }
-
 
 func (c *Client) StartCui() {
 	g, err := gocui.NewGui(gocui.OutputNormal, true)
@@ -38,7 +42,7 @@ func (c *Client) StartCui() {
 	c.Gui = g
 
 	g.Cursor = true
-	g.SetManagerFunc(layout)
+	g.SetManagerFunc(c.layout)
 
 	if err := c.keybindings(g); err != nil {
 		log.Panicln(err)
@@ -52,9 +56,6 @@ func (c *Client) StartCui() {
 			}
 		}
 	}()
-
-    //Initial email fetch on load
-    c.MsgChangePageChan <- struct{}{}
 
 	// this mainloop is blocking
 	if err := g.MainLoop(); err != nil && !errors.Is(err, gocui.ErrQuit) {
@@ -74,4 +75,3 @@ func (c *Client) redrawCui(g *gocui.Gui) error {
 	}
 	return nil
 }
-
