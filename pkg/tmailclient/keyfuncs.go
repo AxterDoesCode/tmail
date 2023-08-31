@@ -65,7 +65,7 @@ func (c *Client) getBody(g *gocui.Gui, v *gocui.View) error {
     v.Clear()
     currentMessage := c.MsgCacheDisplay[y]
 
-    fmt.Fprintf(v, "From: %s", currentMessage.From)
+    fmt.Fprintf(v, "From: %s\n\n", currentMessage.From)
     fmt.Fprintln(v, currentMessage.Body)
 	return nil
 }
