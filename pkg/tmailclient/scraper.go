@@ -17,7 +17,6 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 		return
 	}
 	c.MsgPageToken = messages.NextPageToken
-	//fmt.Printf("Number of messages %v\n", len(messages.Messages))
 
 	wg := sync.WaitGroup{}
 	semaphore := make(chan struct{}, concurrency)

@@ -16,7 +16,6 @@ type Client struct {
 	Srv *gmail.Service
 	*gocui.Gui
 	tmailcache.Cache
-	MsgRecvChan     chan tmailcache.MsgCacheEntry
 	MsgNextPageChan chan struct{}
 	MsgPageToken    string
 	RefreshGuiChan  chan struct{}
@@ -45,7 +44,6 @@ func NewClient() *Client {
     ret := &Client{
 		Srv:             srv,
 		Cache:           tmailcache.NewCache(),
-		MsgRecvChan:     make(chan tmailcache.MsgCacheEntry),
 		MsgNextPageChan: make(chan struct{}),
 		RefreshGuiChan:  make(chan struct{}),
 	}
@@ -62,7 +60,7 @@ func (c *Client) listenForNextPage() {
 	for {
 		select {
 		case <-c.MsgNextPageChan:
-			c.messageScraper(10, 20)
+			c.messageScraper(20, 20)
 		}
 	}
 }
