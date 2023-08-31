@@ -9,17 +9,18 @@ import (
 )
 
 func (c *Client) layout(g *gocui.Gui) error {
+    //This kind of is looped through?
 	if !c.GuiStarted {
 		//Initial fetch
 		c.MsgChangePageChan <- struct{}{}
 		c.GuiStarted = true
 	}
-
 	//Setting the number of results to be the max rows of the terminal
 	maxX, maxY := g.Size()
-	c.MaxResults = maxY
+    y0offset := 5
+	c.MaxResults = maxY - y0offset - 1
 
-	if v, err := g.SetView("side", -1, 10, 40, maxY, 0); err != nil {
+	if v, err := g.SetView("side", -1, y0offset, 40, maxY, 0); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -32,7 +33,7 @@ func (c *Client) layout(g *gocui.Gui) error {
 		}
 	}
 
-	if v, err := g.SetView("main", 40, 10, maxX, maxY, 0); err != nil {
+	if v, err := g.SetView("main", 40, y0offset, maxX, maxY, 0); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
