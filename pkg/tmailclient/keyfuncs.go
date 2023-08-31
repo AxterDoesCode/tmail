@@ -54,6 +54,8 @@ func lineBelow(v *gocui.View, d int) bool {
 	return err == nil && line != ""
 }
 
+
+// This function doesnt need an async call since data is already stored in cache
 func (c *Client) getBody(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
     v, err := g.View("main")
@@ -61,6 +63,9 @@ func (c *Client) getBody(g *gocui.Gui, v *gocui.View) error {
         return err
     }
     v.Clear()
-    fmt.Fprintln(v, c.MsgCacheDisplay[y].Body)
+    currentMessage := c.MsgCacheDisplay[y]
+
+    fmt.Fprintf(v, "From: %s", currentMessage.From)
+    fmt.Fprintln(v, currentMessage.Body)
 	return nil
 }
