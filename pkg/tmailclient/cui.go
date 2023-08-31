@@ -18,7 +18,7 @@ func layout(g *gocui.Gui) error {
 		v.Highlight = true
 		v.SelBgColor = gocui.ColorGreen
 		v.SelFgColor = gocui.ColorBlack
-		fmt.Fprintln(v, "Testing")
+		fmt.Fprintln(v, "Loading Emails...")
 	}
 	return nil
 }
@@ -49,6 +49,9 @@ func (c *Client) StartCui() {
 			}
 		}
 	}()
+
+    //Initial email fetch on load
+    c.MsgChangePageChan <- struct{}{}
 
 	// this mainloop is blocking
 	if err := g.MainLoop(); err != nil && !errors.Is(err, gocui.ErrQuit) {

@@ -16,9 +16,10 @@ type Client struct {
 	Srv *gmail.Service
 	*gocui.Gui
 	tmailcache.Cache
-	MsgNextPageChan chan struct{}
-	MsgPageToken    string
-	RefreshGuiChan  chan struct{}
+	MsgChangePageChan chan struct{}
+	MsgPageTokenMap   map[int]string
+	MsgPageTokenIndex int
+	RefreshGuiChan    chan struct{}
 }
 
 func NewClient() *Client {
@@ -40,26 +41,26 @@ func NewClient() *Client {
 		log.Fatalf("Unable to retrieve Gmail client: %v", err)
 	}
 
-
-    ret := &Client{
-		Srv:             srv,
-		Cache:           tmailcache.NewCache(),
-		MsgNextPageChan: make(chan struct{}),
-		RefreshGuiChan:  make(chan struct{}),
+	ret := &Client{
+		Srv:               srv,
+		Cache:             tmailcache.NewCache(),
+		MsgChangePageChan: make(chan struct{}),
+		RefreshGuiChan:    make(chan struct{}),
+        MsgPageTokenMap: make(map[int]string),
 	}
-    go ret.Listen()
-    return ret
+	go ret.Listen()
+	return ret
 }
 
 func (c *Client) Listen() {
 	//goroutine which adds messages received to the cache sequentially
-	go c.listenForNextPage()
+	go c.listenForPageChange()
 }
 
-func (c *Client) listenForNextPage() {
+func (c *Client) listenForPageChange() {
 	for {
 		select {
-		case <-c.MsgNextPageChan:
+		case <-c.MsgChangePageChan:
 			c.messageScraper(20, 20)
 		}
 	}

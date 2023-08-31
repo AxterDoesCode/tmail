@@ -11,12 +11,17 @@ import (
 )
 
 func (c *Client) messageScraper(concurrency int, maxResults int64) {
-	messages, err := c.Srv.Users.Messages.List("me").PageToken(c.MsgPageToken).MaxResults(maxResults).Do()
+	messages, err := c.Srv.Users.Messages.List("me").PageToken(c.MsgPageTokenMap[c.MsgPageTokenIndex]).MaxResults(maxResults).Do()
 	if err != nil {
 		log.Printf("Unable to retrieve messages: %v\n", err)
 		return
 	}
-	c.MsgPageToken = messages.NextPageToken
+
+    if _, ok := c.MsgPageTokenMap[c.MsgPageTokenIndex + 1]; !ok {
+        c.MsgPageTokenMap[c.MsgPageTokenIndex + 1] = messages.NextPageToken
+    }
+
+    //Reset the content to be displayed
 	c.MsgCacheDisplay = make(map[string]tmailcache.MsgCacheEntry)
 	wg := sync.WaitGroup{}
 	semaphore := make(chan struct{}, concurrency)
@@ -45,7 +50,7 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache.MsgCacheEntry, bool, error) {
 	defer wg.Done()
 
-    //Checks if the entry already is in cache (the map)
+    //Checks if the entry already is in cache ()
     //Maybe this needs to be changed because im creating a pointer of a value???
     if k, ok := c.MsgCache[m.Id]; ok{
         return &k, false, nil
