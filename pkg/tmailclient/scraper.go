@@ -17,9 +17,7 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 		return
 	}
 
-    if _, ok := c.MsgPageTokenMap[c.MsgPageTokenIndex + 1]; !ok {
-        c.MsgPageTokenMap[c.MsgPageTokenIndex + 1] = messages.NextPageToken
-    }
+    c.MsgPageTokenMap[c.MsgPageTokenIndex + 1] = messages.NextPageToken
 
     //Reset the content to be displayed
 	c.MsgCacheDisplay = make(map[string]tmailcache.MsgCacheEntry)
@@ -30,13 +28,13 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 		semaphore <- struct{}{}
 		go func(m *gmail.Message) {
 			defer func() { <-semaphore }()
-			msgEntry, new, err := c.fetchMessage(m, &wg)
+			msgEntry, newMsg, err := c.fetchMessage(m, &wg)
 			if err != nil {
 				log.Println(err)
 				return
 			}
 			c.MsgCacheMu.Lock()
-			if new {
+			if newMsg {
 				c.AddToMessageCache(msgEntry)
 			}
 			c.AddToMessageCacheDisplay(msgEntry)

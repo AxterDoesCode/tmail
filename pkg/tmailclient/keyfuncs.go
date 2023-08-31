@@ -19,3 +19,9 @@ func (c *Client) prevPage(g *gocui.Gui, v *gocui.View) error {
 	}
 	return nil
 }
+
+func (c *Client) refreshEmails(g *gocui.Gui, v *gocui.View) error {
+	c.MsgPageTokenIndex = 0
+	c.MsgChangePageChan <- struct{}{}
+	return nil
+}
