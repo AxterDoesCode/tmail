@@ -132,14 +132,15 @@ func focusSide(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func openReplyView(g *gocui.Gui, v *gocui.View) error {
+func (c *Client) openReplyView(g *gocui.Gui, v *gocui.View) error {
 	maxX, maxY := g.Size()
 	_, err := g.SetView("reply", 10, 10, maxX-10, maxY-10, 0)
 	if !errors.Is(err, gocui.ErrUnknownView) {
 		return err
 	}
-
-	_, err = setCurrentViewOnTop(g, "reply")
+	v, err = setCurrentViewOnTop(g, "reply")
+    v.Editable = true
+    v.Wrap = true
 	if err != nil {
 		return err
 	}

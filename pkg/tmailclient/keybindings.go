@@ -60,10 +60,7 @@ func (c *Client) keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("side", '5', gocui.ModNone, c.selectTab(4)); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("side", '6', gocui.ModNone, c.selectTab(5)); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding("", 'r', gocui.ModNone, openReplyView); err != nil {
+	if err := g.SetKeybinding("", 'r', gocui.ModNone, c.openReplyView); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("reply", gocui.KeyEsc, gocui.ModNone, closeReplyView); err != nil {

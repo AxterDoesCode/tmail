@@ -52,7 +52,7 @@ func NewClient() *Client {
 		RefreshGuiChan:    make(chan struct{}),
 		MsgPageTokenMap:   make(map[int]string),
 		GuiStarted:        false,
-		Labels:            []string{"INBOX", "IMPORTANT", "DRAFTS", "SENT", "SPAM", "TRASH"},
+		Labels:            []string{"INBOX", "IMPORTANT", "SENT", "SPAM", "TRASH"},
 		CurrentLabel:      "INBOX",
 	}
 	ret.Listen()
