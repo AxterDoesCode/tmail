@@ -41,7 +41,7 @@ func (c *Client) cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
 		for ; distance > 0; distance-- {
 			if lineBelow(v, distance*dir) {
 				v.MoveCursor(0, distance*dir)
-				c.getBody(g, v)
+				c.printMessageBody(g, v)
 				return nil
 			}
 		}
@@ -58,7 +58,9 @@ func lineBelow(v *gocui.View, d int) bool {
 
 // This function doesnt need an async call since data is already stored in cache
 // Note that this func requires the view to be "side"
-func (c *Client) getBody(g *gocui.Gui, v *gocui.View) error {
+// Prints message body to main view
+func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
+    //Gets the cursor poisition of the "side" view
 	_, y := v.Cursor()
 	v, err := g.View("main")
 	if err != nil {
@@ -66,8 +68,8 @@ func (c *Client) getBody(g *gocui.Gui, v *gocui.View) error {
 	}
 	v.Clear()
 	currentMessage := c.MsgCacheDisplay[y]
-
 	fmt.Fprintf(v, "Date: %s\nFrom: %s\nType: %s\n\n", currentMessage.Date ,currentMessage.From, currentMessage.ContentType)
+    fmt.Fprintf(v, "%v\n", currentMessage.LabelIds)
 	fmt.Fprintln(v, currentMessage.Body)
 	return nil
 }

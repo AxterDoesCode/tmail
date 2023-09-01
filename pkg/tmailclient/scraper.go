@@ -17,9 +17,9 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 		return
 	}
 
-    c.MsgPageTokenMap[c.MsgPageTokenIndex + 1] = messages.NextPageToken
+	c.MsgPageTokenMap[c.MsgPageTokenIndex+1] = messages.NextPageToken
 
-    //Reset the content to be displayed
+	//Reset the content to be displayed
 	c.MsgCacheDisplay = []tmailcache.MsgCacheEntry{}
 	wg := sync.WaitGroup{}
 	semaphore := make(chan struct{}, concurrency)
@@ -48,11 +48,10 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache.MsgCacheEntry, bool, error) {
 	defer wg.Done()
 
-    //Checks if the entry already is in cache ()
-    //Maybe this needs to be changed because im creating a pointer of a value???
-    if k, ok := c.MsgCache[m.Id]; ok{
-        return &k, false, nil
-    }
+	//Checks if the entry already is in cache ()
+	if k, ok := c.MsgCache[m.Id]; ok {
+		return &k, false, nil
+	}
 
 	msg, err := c.Srv.Users.Messages.Get("me", m.Id).Do()
 	if err != nil {
@@ -63,7 +62,8 @@ func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache
 	MessageEntry := tmailcache.MsgCacheEntry{}
 
 	MessageEntry.Id = msg.Id
-    MessageEntry.InternalDate = msg.InternalDate
+	MessageEntry.InternalDate = msg.InternalDate
+    MessageEntry.LabelIds = msg.LabelIds
 
 	decodedBody, err := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
 	if err != nil {
@@ -71,6 +71,7 @@ func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache
 	}
 	MessageEntry.Body = string(decodedBody)
 
+	//Store relevant payload headers in cache
 	for _, h := range msg.Payload.Headers {
 		switch h.Name {
 		case "Subject":
@@ -85,6 +86,7 @@ func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache
 			MessageEntry.Date = h.Value
 		}
 	}
+
 	//I need to handle non plaintext content sometime
 	//probably by getting the raw data and parsing the html
 

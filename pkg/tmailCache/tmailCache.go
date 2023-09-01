@@ -8,7 +8,7 @@ type Cache struct {
 	MsgCacheDisplay []MsgCacheEntry
 }
 
-//An entry of a gmail message
+// An entry of a gmail message
 type MsgCacheEntry struct {
 	Id           string
 	To           string
@@ -18,6 +18,7 @@ type MsgCacheEntry struct {
 	Body         string
 	Date         string
 	InternalDate int64
+	LabelIds     []string
 }
 
 func NewCache() Cache {

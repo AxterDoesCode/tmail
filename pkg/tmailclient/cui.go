@@ -6,6 +6,7 @@ import (
 	"log"
 	"sort"
 
+	tmailcache "github.com/AxterDoesCode/tmail/pkg/tmailCache"
 	"github.com/awesome-gocui/gocui"
 )
 
@@ -76,7 +77,7 @@ func (c *Client) StartCui() {
 	}
 }
 
-//Redraws the cui after an api call to fetch emails
+// Redraws the cui after an api call to fetch emails
 func (c *Client) redrawCui(g *gocui.Gui) error {
 	v, err := g.View("side")
 	if err != nil {
@@ -84,19 +85,33 @@ func (c *Client) redrawCui(g *gocui.Gui) error {
 	}
 	v.Clear()
 
-    //Sorting the slice by their internal date (epoch time ms)
-    sort.SliceStable(c.MsgCacheDisplay, func(i, j int) bool {
-        return c.MsgCacheDisplay[i].InternalDate > c.MsgCacheDisplay[j].InternalDate
-    })
+	//Sorting the slice by their internal date (epoch time ms)
+	sort.SliceStable(c.MsgCacheDisplay, func(i, j int) bool {
+		return c.MsgCacheDisplay[i].InternalDate > c.MsgCacheDisplay[j].InternalDate
+	})
 
 	for _, val := range c.Cache.MsgCacheDisplay {
-		fmt.Fprintf(v, "%s\n", val.Subject)
+		if messageUnread(val) {
+			fmt.Fprintf(v, "\x1b[0;36m%s\n", val.Subject)
+		} else {
+			fmt.Fprintf(v, "%s\n", val.Subject)
+		}
 	}
 
-    err = c.getBody(g, v)
-    if err != nil {
-        return err
-    }
+	//Prints the message body to main
+	err = c.printMessageBody(g, v)
+	if err != nil {
+		return err
+	}
 
 	return nil
+}
+
+func messageUnread(m tmailcache.MsgCacheEntry) bool {
+	for _, l := range m.LabelIds {
+		if l == "UNREAD" {
+			return true
+		}
+	}
+	return false
 }
