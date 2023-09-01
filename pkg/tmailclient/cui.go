@@ -9,7 +9,7 @@ import (
 )
 
 func (c *Client) layout(g *gocui.Gui) error {
-    //This kind of is looped through?
+	//This kind of is looped through?
 	if !c.GuiStarted {
 		//Initial fetch
 		c.MsgChangePageChan <- struct{}{}
@@ -17,7 +17,7 @@ func (c *Client) layout(g *gocui.Gui) error {
 	}
 	//Setting the number of results to be the max rows of the terminal
 	maxX, maxY := g.Size()
-    y0offset := 5
+	y0offset := 5
 	c.MaxResults = maxY - y0offset - 1
 
 	if v, err := g.SetView("side", -1, y0offset, 40, maxY, 0); err != nil {
@@ -37,8 +37,8 @@ func (c *Client) layout(g *gocui.Gui) error {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
-        v.Wrap = true
-        fmt.Fprintln(v, "Select an email")
+		v.Wrap = true
+		fmt.Fprintln(v, "Select an email")
 	}
 
 	return nil
@@ -75,6 +75,7 @@ func (c *Client) StartCui() {
 	}
 }
 
+//Redraws the cui after an api call to fetch emails
 func (c *Client) redrawCui(g *gocui.Gui) error {
 	v, err := g.View("side")
 	if err != nil {
@@ -85,5 +86,11 @@ func (c *Client) redrawCui(g *gocui.Gui) error {
 	for _, val := range c.Cache.MsgCacheDisplay {
 		fmt.Fprintf(v, "%s\n", val.Subject)
 	}
+
+    err = c.getBody(g, v)
+    if err != nil {
+        return err
+    }
+
 	return nil
 }

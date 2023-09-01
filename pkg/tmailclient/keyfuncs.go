@@ -31,7 +31,7 @@ func (c *Client) refreshEmails(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
+func (c *Client) cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 		dir := 1
 		if d < 0 {
@@ -41,9 +41,11 @@ func cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
 		for ; distance > 0; distance-- {
 			if lineBelow(v, distance*dir) {
 				v.MoveCursor(0, distance*dir)
-				return nil
 			}
 		}
+
+        c.getBody(g, v)
+
 		return nil
 	}
 }
@@ -54,18 +56,35 @@ func lineBelow(v *gocui.View, d int) bool {
 	return err == nil && line != ""
 }
 
-
 // This function doesnt need an async call since data is already stored in cache
+//Note that this func requires the view to be "side"
 func (c *Client) getBody(g *gocui.Gui, v *gocui.View) error {
 	_, y := v.Cursor()
-    v, err := g.View("main")
+	v, err := g.View("main")
+	if err != nil {
+		return err
+	}
+	v.Clear()
+	currentMessage := c.MsgCacheDisplay[y]
+
+	fmt.Fprintf(v, "From: %s\nType: %s\n\n", currentMessage.From, currentMessage.ContentType)
+	fmt.Fprintln(v, currentMessage.Body)
+	return nil
+}
+
+func focusMain (g *gocui.Gui, v *gocui.View) error {
+    _, err := g.SetCurrentView("main")
     if err != nil {
         return err
     }
-    v.Clear()
-    currentMessage := c.MsgCacheDisplay[y]
-
-    fmt.Fprintf(v, "From: %s\nType: %s\n", currentMessage.From, currentMessage.ContentType)
-    fmt.Fprintln(v, currentMessage.Body)
-	return nil
+    return nil
 }
+
+func focusSide (g *gocui.Gui, v *gocui.View) error {
+    _, err := g.SetCurrentView("side")
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
