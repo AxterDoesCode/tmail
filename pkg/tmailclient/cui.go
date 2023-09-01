@@ -19,10 +19,17 @@ func (c *Client) layout(g *gocui.Gui) error {
 	}
 	//Setting the number of results to be the max rows of the terminal
 	maxX, maxY := g.Size()
-	y0offset := 5
+	y0offset := 2
 	c.MaxResults = maxY - y0offset - 1
 
-	if v, err := g.SetView("side", -1, y0offset, 40, maxY, 0); err != nil {
+	if v, err := g.SetView("labels", 0, 0, maxX-1, maxY, 0); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+        fmt.Fprintln(v, "Label Label Label")
+	}
+
+	if v, err := g.SetView("side", 0, y0offset, 40, maxY, 0); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -35,7 +42,7 @@ func (c *Client) layout(g *gocui.Gui) error {
 		}
 	}
 
-	if v, err := g.SetView("main", 40, y0offset, maxX, maxY, 0); err != nil {
+	if v, err := g.SetView("main", 40, y0offset, maxX-1, maxY, 0); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -91,10 +98,10 @@ func (c *Client) redrawCui(g *gocui.Gui) error {
 	})
 
 	for _, val := range c.Cache.MsgCacheDisplay {
-		if messageUnread(val) {
-			fmt.Fprintf(v, "\x1b[0;36m%s\n", val.Subject)
+		if !messageUnread(val) {
+            fmt.Fprintf(v, "\x1b[0;37m%s\n", val.Subject)
 		} else {
-			fmt.Fprintf(v, "%s\n", val.Subject)
+            fmt.Fprintf(v, "\x1b[0;36m%s\n", val.Subject)
 		}
 	}
 
