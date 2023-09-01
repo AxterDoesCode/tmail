@@ -17,6 +17,8 @@ type MsgCacheEntry struct {
 	ContentType  string
 	Body         string
 	Date         string
+	ReplyTo      string
+	ReturnPath   string
 	InternalDate int64
 	LabelIds     []string
 }

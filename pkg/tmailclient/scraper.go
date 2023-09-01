@@ -90,6 +90,10 @@ func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache
 			MessageEntry.ContentType = h.Value
 		case "Date":
 			MessageEntry.Date = h.Value
+		case "Reply-To":
+			MessageEntry.ReplyTo = h.Value
+		case "Return-Path":
+			MessageEntry.ReturnPath = h.Value
 		}
 	}
 
@@ -114,4 +118,3 @@ func (c *Client) getRawMessageData(m *gmail.Message) {
 
 	fmt.Printf("- %s\n", decodedData)
 }
-

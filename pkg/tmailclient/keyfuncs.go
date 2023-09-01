@@ -44,11 +44,11 @@ func (c *Client) nextTab(g *gocui.Gui, v *gocui.View) error {
 func (c *Client) prevTab(g *gocui.Gui, v *gocui.View) error {
 	for i, l := range c.Labels {
 		if c.CurrentLabel == l {
-            labelIndex := i - 1
-            if labelIndex < 0 {
-                labelIndex = len(c.Labels) - 1
-            }
-            c.CurrentLabel = c.Labels[labelIndex]
+			labelIndex := i - 1
+			if labelIndex < 0 {
+				labelIndex = len(c.Labels) - 1
+			}
+			c.CurrentLabel = c.Labels[labelIndex]
 			break
 		}
 	}
@@ -99,24 +99,26 @@ func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
 	}
 	v.Clear()
 	currentMessage := c.MsgCacheDisplay[y]
-	fmt.Fprintf(v, "Date: %s\nFrom: %s\nType: %s\n\n", currentMessage.Date, currentMessage.From, currentMessage.ContentType)
+	fmt.Fprintf(v, "ID: %s\nDate: %s\nFrom: %s\nType: %s\n\n", currentMessage.Id, currentMessage.Date, currentMessage.From, currentMessage.ContentType)
+    fmt.Fprintf(v, "Reply-To: %s\nReturn-Path: %s\n", currentMessage.ReplyTo, currentMessage.ReturnPath)
+    //Add reply to and return path and check the output
 	fmt.Fprintf(v, "%v\n", currentMessage.LabelIds)
 	fmt.Fprintln(v, currentMessage.Body)
 	return nil
 }
 
 func focusMain(g *gocui.Gui, v *gocui.View) error {
-	_, err := g.SetCurrentView("main")
-	if err != nil {
-		return err
-	}
+    _, err := setCurrentViewOnTop(g, "main")
+    if err != nil {
+        return err
+    }
 	return nil
 }
 
 func focusSide(g *gocui.Gui, v *gocui.View) error {
-	_, err := g.SetCurrentView("side")
-	if err != nil {
-		return err
-	}
+    _, err := setCurrentViewOnTop(g, "side")
+    if err != nil {
+        return err
+    }
 	return nil
 }

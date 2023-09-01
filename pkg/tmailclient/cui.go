@@ -10,26 +10,43 @@ import (
 	"github.com/awesome-gocui/gocui"
 )
 
+func setCurrentViewOnTop(g *gocui.Gui, name string) (*gocui.View, error) {
+	if _, err := g.SetCurrentView(name); err != nil {
+		return nil, err
+	}
+	return g.SetViewOnTop(name)
+}
+
 func (c *Client) layout(g *gocui.Gui) error {
 	//This kind of is looped through?
+
 	if !c.GuiStarted {
 		//Initial fetch
 		c.MsgChangePageChan <- struct{}{}
 		c.GuiStarted = true
 	}
+
 	//Setting the number of results to be the max rows of the terminal
 	maxX, maxY := g.Size()
 	y0offset := 2
 	c.MaxResults = maxY - y0offset - 1
 
-	if v, err := g.SetView("labels", 0, 0, maxX-1, maxY, 0); err != nil {
+	if v, err := g.SetView("labels", 0, 0, maxX-1, maxY, gocui.BOTTOM); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
 		fmt.Fprintln(v, "Label Label Label")
 	}
 
-	if v, err := g.SetView("side", 0, y0offset, 40, maxY, 0); err != nil {
+	if v, err := g.SetView("main", 40, y0offset, maxX-1, maxY, gocui.LEFT); err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+		v.Wrap = true
+		fmt.Fprintln(v, "Select an email")
+	}
+
+	if v, err := g.SetView("side", 0, y0offset, 40, maxY, gocui.RIGHT); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -37,17 +54,10 @@ func (c *Client) layout(g *gocui.Gui) error {
 		v.SelBgColor = gocui.ColorGreen
 		v.SelFgColor = gocui.ColorBlack
 		fmt.Fprintln(v, "Loading Emails...")
-		if _, err := g.SetCurrentView("side"); err != nil {
-			return err
-		}
-	}
 
-	if v, err := g.SetView("main", 40, y0offset, maxX-1, maxY, 0); err != nil {
-		if !errors.Is(err, gocui.ErrUnknownView) {
+		if _, err := setCurrentViewOnTop(g, "side"); err != nil {
 			return err
 		}
-		v.Wrap = true
-		fmt.Fprintln(v, "Select an email")
 	}
 
 	return nil
@@ -63,6 +73,11 @@ func (c *Client) StartCui() {
 	c.Gui = g
 
 	g.Cursor = true
+	g.Highlight = true
+	g.SelFgColor = gocui.ColorGreen
+	g.SelFrameColor = gocui.ColorGreen
+	g.SupportOverlaps = true
+
 	g.SetManagerFunc(c.layout)
 
 	if err := c.keybindings(g); err != nil {
