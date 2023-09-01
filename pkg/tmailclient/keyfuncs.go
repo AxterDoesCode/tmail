@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/awesome-gocui/gocui"
+	"google.golang.org/api/gmail/v1"
 )
 
 func quit(g *gocui.Gui, v *gocui.View) error {
@@ -158,4 +159,14 @@ func closeReplyView(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 	return nil
+}
+
+func (c *Client) sendMessage (g *gocui.Gui, v *gocui.View) error {
+    msg := gmail.Message{}
+    //msgContent := v.ViewBuffer()
+
+    //msg.Header.Add("To", value string)
+    //Need to base64 encode message and some other stuff
+    c.Srv.Users.Messages.Send("me", &msg)
+    return nil
 }
