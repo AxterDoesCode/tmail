@@ -41,10 +41,10 @@ func (c *Client) cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
 		for ; distance > 0; distance-- {
 			if lineBelow(v, distance*dir) {
 				v.MoveCursor(0, distance*dir)
+                c.getBody(g, v)
+                return nil 
 			}
 		}
-
-        c.getBody(g, v)
 
 		return nil
 	}
