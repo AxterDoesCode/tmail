@@ -1,6 +1,7 @@
 package tmailclient
 
 import (
+	"errors"
 	"fmt"
 	"math"
 
@@ -60,7 +61,7 @@ func (c *Client) selectTab(t int) func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 		c.CurrentLabel = c.Labels[t]
 		c.refreshEmails(g, v)
-        return nil
+		return nil
 	}
 }
 
@@ -125,6 +126,33 @@ func focusMain(g *gocui.Gui, v *gocui.View) error {
 
 func focusSide(g *gocui.Gui, v *gocui.View) error {
 	_, err := setCurrentViewOnTop(g, "side")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func openReplyView(g *gocui.Gui, v *gocui.View) error {
+	maxX, maxY := g.Size()
+	_, err := g.SetView("reply", 10, 10, maxX-10, maxY-10, 0)
+	if !errors.Is(err, gocui.ErrUnknownView) {
+		return err
+	}
+
+	_, err = setCurrentViewOnTop(g, "reply")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func closeReplyView(g *gocui.Gui, v *gocui.View) error {
+	err := g.DeleteView("reply")
+	if err != nil {
+		return err
+	}
+	_, err = setCurrentViewOnTop(g, "side")
 	if err != nil {
 		return err
 	}
