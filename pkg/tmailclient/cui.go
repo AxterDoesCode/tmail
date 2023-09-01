@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/awesome-gocui/gocui"
 )
@@ -82,6 +83,11 @@ func (c *Client) redrawCui(g *gocui.Gui) error {
 		return err
 	}
 	v.Clear()
+
+    //Sorting the slice by their internal date (epoch time ms)
+    sort.SliceStable(c.MsgCacheDisplay, func(i, j int) bool {
+        return c.MsgCacheDisplay[i].InternalDate > c.MsgCacheDisplay[j].InternalDate
+    })
 
 	for _, val := range c.Cache.MsgCacheDisplay {
 		fmt.Fprintf(v, "%s\n", val.Subject)

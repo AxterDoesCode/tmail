@@ -63,6 +63,8 @@ func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache
 	MessageEntry := tmailcache.MsgCacheEntry{}
 
 	MessageEntry.Id = msg.Id
+    MessageEntry.InternalDate = msg.InternalDate
+
 	decodedBody, err := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
 	if err != nil {
 		return nil, false, err
@@ -79,6 +81,8 @@ func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache
 			MessageEntry.From = h.Value
 		case "Content-Type":
 			MessageEntry.ContentType = h.Value
+		case "Date":
+			MessageEntry.Date = h.Value
 		}
 	}
 	//I need to handle non plaintext content sometime
