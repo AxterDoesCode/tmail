@@ -25,6 +25,37 @@ func (c *Client) prevPage(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func (c *Client) nextTab(g *gocui.Gui, v *gocui.View) error {
+	for i, l := range c.Labels {
+		if c.CurrentLabel == l {
+			maxIndex := len(c.Labels) - 1
+			labelIndex := i + 1
+			if labelIndex > maxIndex {
+				labelIndex = 0
+			}
+			c.CurrentLabel = c.Labels[labelIndex]
+			break
+		}
+	}
+	c.refreshEmails(g, v)
+	return nil
+}
+
+func (c *Client) prevTab(g *gocui.Gui, v *gocui.View) error {
+	for i, l := range c.Labels {
+		if c.CurrentLabel == l {
+            labelIndex := i - 1
+            if labelIndex < 0 {
+                labelIndex = len(c.Labels) - 1
+            }
+            c.CurrentLabel = c.Labels[labelIndex]
+			break
+		}
+	}
+	c.refreshEmails(g, v)
+	return nil
+}
+
 func (c *Client) refreshEmails(g *gocui.Gui, v *gocui.View) error {
 	c.MsgPageTokenIndex = 0
 	c.MsgChangePageChan <- struct{}{}
@@ -60,7 +91,7 @@ func lineBelow(v *gocui.View, d int) bool {
 // Note that this func requires the view to be "side"
 // Prints message body to main view
 func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
-    //Gets the cursor poisition of the "side" view
+	//Gets the cursor poisition of the "side" view
 	_, y := v.Cursor()
 	v, err := g.View("main")
 	if err != nil {
@@ -68,8 +99,8 @@ func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
 	}
 	v.Clear()
 	currentMessage := c.MsgCacheDisplay[y]
-	fmt.Fprintf(v, "Date: %s\nFrom: %s\nType: %s\n\n", currentMessage.Date ,currentMessage.From, currentMessage.ContentType)
-    fmt.Fprintf(v, "%v\n", currentMessage.LabelIds)
+	fmt.Fprintf(v, "Date: %s\nFrom: %s\nType: %s\n\n", currentMessage.Date, currentMessage.From, currentMessage.ContentType)
+	fmt.Fprintf(v, "%v\n", currentMessage.LabelIds)
 	fmt.Fprintln(v, currentMessage.Body)
 	return nil
 }

@@ -11,7 +11,7 @@ import (
 )
 
 func (c *Client) messageScraper() {
-	messages, err := c.Srv.Users.Messages.List("me").PageToken(c.MsgPageTokenMap[c.MsgPageTokenIndex]).MaxResults(int64(c.MaxResults)).Do()
+	messages, err := c.Srv.Users.Messages.List("me").PageToken(c.MsgPageTokenMap[c.MsgPageTokenIndex]).MaxResults(int64(c.MaxResults)).LabelIds(c.CurrentLabel).Do()
 	if err != nil {
 		log.Printf("Unable to retrieve messages: %v\n", err)
 		return
@@ -115,6 +115,3 @@ func (c *Client) getRawMessageData(m *gmail.Message) {
 	fmt.Printf("- %s\n", decodedData)
 }
 
-func (c *Client) GetLabels () {
-    return
-}
