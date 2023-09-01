@@ -56,6 +56,14 @@ func (c *Client) prevTab(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func (c *Client) selectTab(t int) func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		c.CurrentLabel = c.Labels[t]
+		c.refreshEmails(g, v)
+        return nil
+	}
+}
+
 func (c *Client) refreshEmails(g *gocui.Gui, v *gocui.View) error {
 	c.MsgPageTokenIndex = 0
 	c.MsgChangePageChan <- struct{}{}
@@ -100,25 +108,25 @@ func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
 	v.Clear()
 	currentMessage := c.MsgCacheDisplay[y]
 	fmt.Fprintf(v, "ID: %s\nDate: %s\nFrom: %s\nType: %s\n\n", currentMessage.Id, currentMessage.Date, currentMessage.From, currentMessage.ContentType)
-    fmt.Fprintf(v, "Reply-To: %s\nReturn-Path: %s\n", currentMessage.ReplyTo, currentMessage.ReturnPath)
-    //Add reply to and return path and check the output
+	fmt.Fprintf(v, "Reply-To: %s\nReturn-Path: %s\n", currentMessage.ReplyTo, currentMessage.ReturnPath)
+	//Add reply to and return path and check the output
 	fmt.Fprintf(v, "%v\n", currentMessage.LabelIds)
 	fmt.Fprintln(v, currentMessage.Body)
 	return nil
 }
 
 func focusMain(g *gocui.Gui, v *gocui.View) error {
-    _, err := setCurrentViewOnTop(g, "main")
-    if err != nil {
-        return err
-    }
+	_, err := setCurrentViewOnTop(g, "main")
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func focusSide(g *gocui.Gui, v *gocui.View) error {
-    _, err := setCurrentViewOnTop(g, "side")
-    if err != nil {
-        return err
-    }
+	_, err := setCurrentViewOnTop(g, "side")
+	if err != nil {
+		return err
+	}
 	return nil
 }

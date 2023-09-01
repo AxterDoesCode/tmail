@@ -42,7 +42,25 @@ func (c *Client) keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("side", gocui.KeyTab, gocui.ModNone, c.nextTab); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("side", gocui.KeyBacktab, gocui.ModNone, c.prevTab); err != nil {
+	if err := g.SetKeybinding("side", gocui.KeyBacktab, gocui.ModNone, c.nextTab); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("side", '1', gocui.ModNone, c.selectTab(0)); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("side", '2', gocui.ModNone, c.selectTab(1)); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("side", '3', gocui.ModNone, c.selectTab(2)); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("side", '4', gocui.ModNone, c.selectTab(3)); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("side", '5', gocui.ModNone, c.selectTab(4)); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("side", '6', gocui.ModNone, c.selectTab(5)); err != nil {
 		return err
 	}
 	return nil
