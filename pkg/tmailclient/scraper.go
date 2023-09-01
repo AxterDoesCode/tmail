@@ -10,8 +10,8 @@ import (
 	"google.golang.org/api/gmail/v1"
 )
 
-func (c *Client) messageScraper(concurrency int, maxResults int64) {
-	messages, err := c.Srv.Users.Messages.List("me").PageToken(c.MsgPageTokenMap[c.MsgPageTokenIndex]).MaxResults(maxResults).Do()
+func (c *Client) messageScraper() {
+	messages, err := c.Srv.Users.Messages.List("me").PageToken(c.MsgPageTokenMap[c.MsgPageTokenIndex]).MaxResults(int64(c.MaxResults)).Do()
 	if err != nil {
 		log.Printf("Unable to retrieve messages: %v\n", err)
 		return
@@ -22,21 +22,19 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 	//Reset the content to be displayed
 	c.MsgCacheDisplay = []tmailcache.MsgCacheEntry{}
 	wg := sync.WaitGroup{}
-	semaphore := make(chan struct{}, concurrency)
+	semaphore := make(chan struct{}, c.MaxResults)
 	for _, m := range messages.Messages {
 		wg.Add(1)
 		semaphore <- struct{}{}
 		go func(m *gmail.Message) {
 			defer func() { <-semaphore }()
-			msgEntry, newMsg, err := c.fetchMessage(m, &wg)
+			msgEntry, err := c.fetchMessage(m, &wg)
 			if err != nil {
 				log.Println(err)
 				return
 			}
 			c.MsgCacheMu.Lock()
-			if newMsg {
-				c.AddToMessageCache(msgEntry)
-			}
+			c.AddToMessageCache(msgEntry)
 			c.AddToMessageCacheDisplay(msgEntry)
 			c.MsgCacheMu.Unlock()
 		}(m)
@@ -45,29 +43,37 @@ func (c *Client) messageScraper(concurrency int, maxResults int64) {
 	c.RefreshGuiChan <- struct{}{}
 }
 
-func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache.MsgCacheEntry, bool, error) {
+func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache.MsgCacheEntry, error) {
 	defer wg.Done()
 
 	//Checks if the entry already is in cache ()
 	if k, ok := c.MsgCache[m.Id]; ok {
-		return &k, false, nil
+		msg, err := c.Srv.Users.Messages.Get("me", m.Id).Format("minimal").Do()
+		if err != nil {
+			log.Printf("Error retrieving message: %v", err)
+			return nil, err
+		}
+		k.LabelIds = msg.LabelIds
+
+		return &k, nil
 	}
 
+	//Msg isn't in cache so fetch the whole body/do raw data parsing
 	msg, err := c.Srv.Users.Messages.Get("me", m.Id).Do()
 	if err != nil {
 		log.Printf("Error retrieving message: %v", err)
-		return nil, false, err
+		return nil, err
 	}
 
 	MessageEntry := tmailcache.MsgCacheEntry{}
 
 	MessageEntry.Id = msg.Id
 	MessageEntry.InternalDate = msg.InternalDate
-    MessageEntry.LabelIds = msg.LabelIds
+	MessageEntry.LabelIds = msg.LabelIds
 
 	decodedBody, err := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	MessageEntry.Body = string(decodedBody)
 
@@ -90,7 +96,7 @@ func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache
 	//I need to handle non plaintext content sometime
 	//probably by getting the raw data and parsing the html
 
-	return &MessageEntry, true, nil
+	return &MessageEntry, nil
 }
 
 func (c *Client) getRawMessageData(m *gmail.Message) {
@@ -107,4 +113,8 @@ func (c *Client) getRawMessageData(m *gmail.Message) {
 	}
 
 	fmt.Printf("- %s\n", decodedData)
+}
+
+func (c *Client) GetLabels () {
+    return
 }

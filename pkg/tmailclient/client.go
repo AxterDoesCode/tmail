@@ -21,7 +21,9 @@ type Client struct {
 	MsgPageTokenIndex int
 	MaxResults        int
 	RefreshGuiChan    chan struct{}
-    GuiStarted bool
+	GuiStarted        bool
+	Labels            []string
+	CurrentLabel      string
 }
 
 func NewClient() *Client {
@@ -49,9 +51,11 @@ func NewClient() *Client {
 		MsgChangePageChan: make(chan struct{}),
 		RefreshGuiChan:    make(chan struct{}),
 		MsgPageTokenMap:   make(map[int]string),
-        GuiStarted: false,
+		GuiStarted:        false,
+		Labels:            []string{"INBOX", "IMPORTANT", "DRAFTS", "SENT", "SPAM", "TRASH"},
+		CurrentLabel:      "INBOX",
 	}
-	go ret.Listen()
+	ret.Listen()
 	return ret
 }
 
@@ -64,7 +68,7 @@ func (c *Client) listenForPageChange() {
 	for {
 		select {
 		case <-c.MsgChangePageChan:
-			c.messageScraper(c.MaxResults, int64(c.MaxResults))
+			c.messageScraper()
 		}
 	}
 }
