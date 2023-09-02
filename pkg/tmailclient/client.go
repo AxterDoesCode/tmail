@@ -25,6 +25,7 @@ type Client struct {
 	Labels            []string
 	CurrentLabel      string
 	CurrentMessage    tmailcache.MsgCacheEntry
+	EmailAddress      string
 }
 
 func NewClient() *Client {
@@ -46,6 +47,12 @@ func NewClient() *Client {
 		log.Fatalf("Unable to retrieve Gmail client: %v", err)
 	}
 
+    //Need to get the user email address for email headers
+	profile, err := srv.Users.GetProfile("me").Do()
+	if err != nil {
+		log.Fatalf("Unable to retrieve Gmail profile: %v", err)
+	}
+
 	ret := &Client{
 		Srv:               srv,
 		Cache:             tmailcache.NewCache(),
@@ -55,6 +62,7 @@ func NewClient() *Client {
 		GuiStarted:        false,
 		Labels:            []string{"INBOX", "IMPORTANT", "SENT", "SPAM", "TRASH"},
 		CurrentLabel:      "INBOX",
+		EmailAddress:      profile.EmailAddress,
 	}
 	ret.Listen()
 	return ret

@@ -1,8 +1,10 @@
 package tmailclient
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 
 	"github.com/awesome-gocui/gocui"
@@ -84,7 +86,6 @@ func (c *Client) cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
 	}
 }
 
-
 func scrollMessage(d int) func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 		dir := 1
@@ -112,7 +113,7 @@ func lineBelow(v *gocui.View, d int) bool {
 func lineBelow2(v *gocui.View, d int) bool {
 	_, y := v.Cursor()
 	_, err := v.Line(y + d)
-	return err == nil 
+	return err == nil
 }
 
 // This function doesnt need an async call since data is already stored in cache
@@ -127,9 +128,9 @@ func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
 	}
 	v.Clear()
 
-    if len(c.MsgCacheDisplay) == 0 {
-        return nil
-    } 
+	if len(c.MsgCacheDisplay) == 0 {
+		return nil
+	}
 	currentMessage := c.MsgCacheDisplay[y]
 	c.CurrentMessage = currentMessage
 	fmt.Fprintf(v, "ID: %s\nDate: %s\nFrom: %s\nType: %s\n\n", currentMessage.Id, currentMessage.Date, currentMessage.From, currentMessage.ContentType)
@@ -169,7 +170,7 @@ func focusSide(g *gocui.Gui, v *gocui.View) error {
 
 func (c *Client) openReplyView(g *gocui.Gui, v *gocui.View) error {
 	maxX, maxY := g.Size()
-	_, err := g.SetView("reply", 10, 10, maxX-10, maxY-10, 0)
+	_, err := g.SetView("reply", 10, 1, maxX-10, maxY-1, 0)
 	if !errors.Is(err, gocui.ErrUnknownView) {
 		return err
 	}
@@ -196,25 +197,37 @@ func closeReplyView(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (c *Client) sendMessage(g *gocui.Gui, v *gocui.View) error {
-	msg := gmail.Message{}
-	//msgContent := v.ViewBuffer()
+	var message gmail.Message
+    msgContent := v.ViewBuffer()
 
-	//msg.Header.Add("To", value string)
-	//use
-	//Need to base64 encode message and some other stuff
-    //Also need to do this within a goroutine probably
-	go c.Srv.Users.Messages.Send("me", &msg)
+	messageStr := []byte("From: 'me'\r\n" +
+		"Reply-To: "+c.EmailAddress+"\r\n" +
+		"Return-Path: "+c.EmailAddress+"\r\n" +
+		"To: "+c.CurrentMessage.ReturnPath+ "\r\n" +
+		"Subject: Testing Gmail API \r\n" +
+		"\r\n" + msgContent)
+
+	message.Raw = base64.StdEncoding.EncodeToString(messageStr)
+
+    go func(){
+        _, err := c.Srv.Users.Messages.Send("me", &message).Do()
+        if err != nil {
+            log.Fatalf("Unable to send. %v", err)
+        }
+    }()
+	//This needs to be wrapped in a function cos I need to do error handling
+	closeReplyView(g, v)
 	return nil
 }
 
-//Function does delete or trashing of a message based on its labelIds
+// Function does delete or trashing of a message based on its labelIds
 func (c *Client) deleteMessage(g *gocui.Gui, v *gocui.View) error {
-    if c.CurrentLabel != "TRASH" {
-        c.Srv.Users.Messages.Trash("me", c.CurrentMessage.Id).Do()
-    } else {
-        c.Srv.Users.Messages.Delete("me", c.CurrentMessage.Id).Do()
-    }
+	if c.CurrentLabel != "TRASH" {
+		c.Srv.Users.Messages.Trash("me", c.CurrentMessage.Id).Do()
+	} else {
+		c.Srv.Users.Messages.Delete("me", c.CurrentMessage.Id).Do()
+	}
 	c.MsgChangePageChan <- struct{}{}
 
-    return nil
+	return nil
 }
