@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"sort"
 
 	tmailcache "github.com/AxterDoesCode/tmail/pkg/tmailCache"
@@ -134,12 +135,13 @@ func (c *Client) redrawCui(g *gocui.Gui) error {
 			fmt.Fprintf(v, "%s\n", val.Subject)
 		}
 	}
-
+    
 	//Prints the message body to main
 	err = c.printMessageBody(g, v)
 	if err != nil {
 		return err
 	}
+    fmt.Fprintf(os.Stderr, "4 %s\n", c.CurrentLabel)
 
 	return nil
 }

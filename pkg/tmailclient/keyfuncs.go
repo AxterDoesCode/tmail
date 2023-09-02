@@ -126,6 +126,10 @@ func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 	v.Clear()
+
+    if len(c.MsgCacheDisplay) == 0 {
+        return nil
+    } 
 	currentMessage := c.MsgCacheDisplay[y]
 	c.CurrentMessage = currentMessage
 	fmt.Fprintf(v, "ID: %s\nDate: %s\nFrom: %s\nType: %s\n\n", currentMessage.Id, currentMessage.Date, currentMessage.From, currentMessage.ContentType)
@@ -198,6 +202,19 @@ func (c *Client) sendMessage(g *gocui.Gui, v *gocui.View) error {
 	//msg.Header.Add("To", value string)
 	//use
 	//Need to base64 encode message and some other stuff
-	c.Srv.Users.Messages.Send("me", &msg)
+    //Also need to do this within a goroutine probably
+	go c.Srv.Users.Messages.Send("me", &msg)
 	return nil
+}
+
+//Function does delete or trashing of a message based on its labelIds
+func (c *Client) deleteMessage(g *gocui.Gui, v *gocui.View) error {
+    if c.CurrentLabel != "TRASH" {
+        c.Srv.Users.Messages.Trash("me", c.CurrentMessage.Id).Do()
+    } else {
+        c.Srv.Users.Messages.Delete("me", c.CurrentMessage.Id).Do()
+    }
+	c.MsgChangePageChan <- struct{}{}
+
+    return nil
 }

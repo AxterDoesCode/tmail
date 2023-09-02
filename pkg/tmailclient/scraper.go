@@ -11,7 +11,11 @@ import (
 )
 
 func (c *Client) messageScraper() {
-	messages, err := c.Srv.Users.Messages.List("me").PageToken(c.MsgPageTokenMap[c.MsgPageTokenIndex]).MaxResults(int64(c.MaxResults)).LabelIds(c.CurrentLabel).Do()
+    includeSpamTrash := false
+    if c.CurrentLabel == "SPAM" || c.CurrentLabel == "TRASH" {
+        includeSpamTrash = true
+    }
+	messages, err := c.Srv.Users.Messages.List("me").PageToken(c.MsgPageTokenMap[c.MsgPageTokenIndex]).MaxResults(int64(c.MaxResults)).LabelIds(c.CurrentLabel).IncludeSpamTrash(includeSpamTrash).Do()
 	if err != nil {
 		log.Printf("Unable to retrieve messages: %v\n", err)
 		return
@@ -33,10 +37,12 @@ func (c *Client) messageScraper() {
 				log.Println(err)
 				return
 			}
-			c.MsgCacheMu.Lock()
-			c.AddToMessageCache(msgEntry)
-			c.AddToMessageCacheDisplay(msgEntry)
-			c.MsgCacheMu.Unlock()
+            if msgEntry != nil {
+                c.MsgCacheMu.Lock()
+                c.AddToMessageCache(msgEntry)
+                c.AddToMessageCacheDisplay(msgEntry)
+                c.MsgCacheMu.Unlock()
+            }
 		}(m)
 	}
 	wg.Wait()
@@ -49,10 +55,12 @@ func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache
 	//Checks if the entry already is in cache ()
 	if k, ok := c.MsgCache[m.Id]; ok {
 		msg, err := c.Srv.Users.Messages.Get("me", m.Id).Format("minimal").Do()
-		if err != nil {
-			log.Printf("Error retrieving message: %v", err)
+		if err != nil && c.CurrentLabel != "TRASH" {
+			log.Printf("Error retrieving message cache: %v", err)
 			return nil, err
-		}
+		} else if err != nil {
+            return nil, nil
+        }
 		k.LabelIds = msg.LabelIds
 
 		return &k, nil
@@ -61,7 +69,7 @@ func (c *Client) fetchMessage(m *gmail.Message, wg *sync.WaitGroup) (*tmailcache
 	//Msg isn't in cache so fetch the whole body/do raw data parsing
 	msg, err := c.Srv.Users.Messages.Get("me", m.Id).Do()
 	if err != nil {
-		log.Printf("Error retrieving message: %v", err)
+		log.Printf("Error retrieving message main: %v", err)
 		return nil, err
 	}
 

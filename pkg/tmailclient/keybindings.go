@@ -75,5 +75,9 @@ func (c *Client) keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("reply", gocui.KeyCtrlS, gocui.ModNone, c.sendMessage); err != nil {
 		return err
 	}
+	if err := g.SetKeybinding("side", 'D', gocui.ModNone, c.deleteMessage); err != nil {
+		return err
+	}
+
 	return nil
 }
