@@ -28,34 +28,27 @@ func (c *Client) prevPage(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (c *Client) nextTab(g *gocui.Gui, v *gocui.View) error {
-	for i, l := range c.Labels {
-		if c.CurrentLabel == l {
-			maxIndex := len(c.Labels) - 1
-			labelIndex := i + 1
-			if labelIndex > maxIndex {
-				labelIndex = 0
-			}
-			c.CurrentLabel = c.Labels[labelIndex]
-			break
-		}
-	}
-	c.refreshEmails(g, v)
-	return nil
+    for i, l := range c.Labels {
+        if c.CurrentLabel == l {
+            labelIndex := (i + 1 + len(c.Labels)) % len(c.Labels)
+            c.CurrentLabel = c.Labels[labelIndex]
+            break
+        }
+    }
+    c.refreshEmails(g, v)
+    return nil
 }
 
 func (c *Client) prevTab(g *gocui.Gui, v *gocui.View) error {
-	for i, l := range c.Labels {
-		if c.CurrentLabel == l {
-			labelIndex := i - 1
-			if labelIndex < 0 {
-				labelIndex = len(c.Labels) - 1
-			}
-			c.CurrentLabel = c.Labels[labelIndex]
-			break
-		}
-	}
-	c.refreshEmails(g, v)
-	return nil
+    for i, l := range c.Labels {
+        if c.CurrentLabel == l {
+            labelIndex := (i - 1 + len(c.Labels)) % len(c.Labels)
+            c.CurrentLabel = c.Labels[labelIndex]
+            break
+        }
+    }
+    c.refreshEmails(g, v)
+    return nil
 }
 
 func (c *Client) selectTab(t int) func(g *gocui.Gui, v *gocui.View) error {
@@ -109,6 +102,7 @@ func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
 	}
 	v.Clear()
 	currentMessage := c.MsgCacheDisplay[y]
+    c.CurrentMessage = currentMessage
 	fmt.Fprintf(v, "ID: %s\nDate: %s\nFrom: %s\nType: %s\n\n", currentMessage.Id, currentMessage.Date, currentMessage.From, currentMessage.ContentType)
 	fmt.Fprintf(v, "Reply-To: %s\nReturn-Path: %s\n", currentMessage.ReplyTo, currentMessage.ReturnPath)
 	//Add reply to and return path and check the output
@@ -166,6 +160,7 @@ func (c *Client) sendMessage (g *gocui.Gui, v *gocui.View) error {
     //msgContent := v.ViewBuffer()
 
     //msg.Header.Add("To", value string)
+    //use
     //Need to base64 encode message and some other stuff
     c.Srv.Users.Messages.Send("me", &msg)
     return nil

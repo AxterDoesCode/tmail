@@ -24,6 +24,7 @@ type Client struct {
 	GuiStarted        bool
 	Labels            []string
 	CurrentLabel      string
+	CurrentMessage    tmailcache.MsgCacheEntry
 }
 
 func NewClient() *Client {
