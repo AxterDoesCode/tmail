@@ -27,13 +27,19 @@ func (c *Client) keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("side", gocui.KeyArrowUp, gocui.ModNone, c.cursorMovement(-1)); err != nil {
 		return err
 	}
+	if err := g.SetKeybinding("main", 'j', gocui.ModNone, scrollMessage(1)); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("main", 'k', gocui.ModNone, scrollMessage(-1)); err != nil {
+		return err
+	}
 	if err := g.SetKeybinding("side", 'J', gocui.ModNone, c.cursorMovement(10)); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("side", 'K', gocui.ModNone, c.cursorMovement(-10)); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("side", gocui.KeyEnter, gocui.ModNone, focusMain); err != nil {
+	if err := g.SetKeybinding("side", gocui.KeyEnter, gocui.ModNone, c.focusMain); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("main", gocui.KeyEsc, gocui.ModNone, focusSide); err != nil {

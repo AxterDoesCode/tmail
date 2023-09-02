@@ -28,27 +28,27 @@ func (c *Client) prevPage(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (c *Client) nextTab(g *gocui.Gui, v *gocui.View) error {
-    for i, l := range c.Labels {
-        if c.CurrentLabel == l {
-            labelIndex := (i + 1 + len(c.Labels)) % len(c.Labels)
-            c.CurrentLabel = c.Labels[labelIndex]
-            break
-        }
-    }
-    c.refreshEmails(g, v)
-    return nil
+	for i, l := range c.Labels {
+		if c.CurrentLabel == l {
+			labelIndex := (i + 1 + len(c.Labels)) % len(c.Labels)
+			c.CurrentLabel = c.Labels[labelIndex]
+			break
+		}
+	}
+	c.refreshEmails(g, v)
+	return nil
 }
 
 func (c *Client) prevTab(g *gocui.Gui, v *gocui.View) error {
-    for i, l := range c.Labels {
-        if c.CurrentLabel == l {
-            labelIndex := (i - 1 + len(c.Labels)) % len(c.Labels)
-            c.CurrentLabel = c.Labels[labelIndex]
-            break
-        }
-    }
-    c.refreshEmails(g, v)
-    return nil
+	for i, l := range c.Labels {
+		if c.CurrentLabel == l {
+			labelIndex := (i - 1 + len(c.Labels)) % len(c.Labels)
+			c.CurrentLabel = c.Labels[labelIndex]
+			break
+		}
+	}
+	c.refreshEmails(g, v)
+	return nil
 }
 
 func (c *Client) selectTab(t int) func(g *gocui.Gui, v *gocui.View) error {
@@ -84,10 +84,35 @@ func (c *Client) cursorMovement(d int) func(g *gocui.Gui, v *gocui.View) error {
 	}
 }
 
+
+func scrollMessage(d int) func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		dir := 1
+		if d < 0 {
+			dir = -1
+		}
+		distance := int(math.Abs(float64(d)))
+		for ; distance > 0; distance-- {
+			if lineBelow2(v, distance*dir) {
+				v.MoveCursor(0, distance*dir)
+				return nil
+			}
+		}
+
+		return nil
+	}
+}
+
 func lineBelow(v *gocui.View, d int) bool {
 	_, y := v.Cursor()
 	line, err := v.Line(y + d)
 	return err == nil && line != ""
+}
+
+func lineBelow2(v *gocui.View, d int) bool {
+	_, y := v.Cursor()
+	_, err := v.Line(y + d)
+	return err == nil 
 }
 
 // This function doesnt need an async call since data is already stored in cache
@@ -102,7 +127,7 @@ func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
 	}
 	v.Clear()
 	currentMessage := c.MsgCacheDisplay[y]
-    c.CurrentMessage = currentMessage
+	c.CurrentMessage = currentMessage
 	fmt.Fprintf(v, "ID: %s\nDate: %s\nFrom: %s\nType: %s\n\n", currentMessage.Id, currentMessage.Date, currentMessage.From, currentMessage.ContentType)
 	fmt.Fprintf(v, "Reply-To: %s\nReturn-Path: %s\n", currentMessage.ReplyTo, currentMessage.ReturnPath)
 	//Add reply to and return path and check the output
@@ -111,8 +136,19 @@ func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func focusMain(g *gocui.Gui, v *gocui.View) error {
-	_, err := setCurrentViewOnTop(g, "main")
+func (c *Client) focusMain(g *gocui.Gui, v *gocui.View) error {
+	_, y := v.Cursor()
+	line, err := v.Line(y)
+	if err != nil {
+		return err
+	}
+	v.SetLine(y, line)
+	go func() {
+		mrq := gmail.ModifyMessageRequest{}
+		mrq.RemoveLabelIds = []string{"UNREAD"}
+		c.Srv.Users.Messages.Modify("me", c.CurrentMessage.Id, &mrq).Do()
+	}()
+	_, err = setCurrentViewOnTop(g, "main")
 	if err != nil {
 		return err
 	}
@@ -134,8 +170,8 @@ func (c *Client) openReplyView(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 	v, err = setCurrentViewOnTop(g, "reply")
-    v.Editable = true
-    v.Wrap = true
+	v.Editable = true
+	v.Wrap = true
 	if err != nil {
 		return err
 	}
@@ -155,13 +191,13 @@ func closeReplyView(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (c *Client) sendMessage (g *gocui.Gui, v *gocui.View) error {
-    msg := gmail.Message{}
-    //msgContent := v.ViewBuffer()
+func (c *Client) sendMessage(g *gocui.Gui, v *gocui.View) error {
+	msg := gmail.Message{}
+	//msgContent := v.ViewBuffer()
 
-    //msg.Header.Add("To", value string)
-    //use
-    //Need to base64 encode message and some other stuff
-    c.Srv.Users.Messages.Send("me", &msg)
-    return nil
+	//msg.Header.Add("To", value string)
+	//use
+	//Need to base64 encode message and some other stuff
+	c.Srv.Users.Messages.Send("me", &msg)
+	return nil
 }
