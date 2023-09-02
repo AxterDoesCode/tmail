@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"mime"
 
 	"github.com/awesome-gocui/gocui"
 	"google.golang.org/api/gmail/v1"
@@ -198,23 +199,26 @@ func closeReplyView(g *gocui.Gui, v *gocui.View) error {
 
 func (c *Client) sendMessage(g *gocui.Gui, v *gocui.View) error {
 	var message gmail.Message
-    msgContent := v.ViewBuffer()
+	msgContent := v.ViewBuffer()
+
+    mimeType := mime.TypeByExtension(".txt")
 
 	messageStr := []byte("From: 'me'\r\n" +
-		"Reply-To: "+c.EmailAddress+"\r\n" +
-		"Return-Path: "+c.EmailAddress+"\r\n" +
-		"To: "+c.CurrentMessage.ReturnPath+ "\r\n" +
+		"Reply-To: " + c.EmailAddress + "\r\n" +
+		"Return-Path: " + c.EmailAddress + "\r\n" +
+		"To: " + c.CurrentMessage.ReturnPath + "\r\n" +
+		"Content-Type: " + mimeType + "\r\n" +
 		"Subject: Testing Gmail API \r\n" +
 		"\r\n" + msgContent)
 
 	message.Raw = base64.StdEncoding.EncodeToString(messageStr)
 
-    go func(){
-        _, err := c.Srv.Users.Messages.Send("me", &message).Do()
-        if err != nil {
-            log.Fatalf("Unable to send. %v", err)
-        }
-    }()
+	go func() {
+		_, err := c.Srv.Users.Messages.Send("me", &message).Do()
+		if err != nil {
+			log.Fatalf("Unable to send. %v", err)
+		}
+	}()
 	//This needs to be wrapped in a function cos I need to do error handling
 	closeReplyView(g, v)
 	return nil
