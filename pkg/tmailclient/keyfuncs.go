@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"mime"
+	"net/mail"
 	"strings"
 
 	"github.com/awesome-gocui/gocui"
@@ -218,6 +219,9 @@ func (c *Client) sendMessage(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
+    if !validateEmail(returnPath) {
+        return nil
+    }
 
 	mimeType := mime.TypeByExtension(".txt")
 
@@ -252,4 +256,9 @@ func (c *Client) deleteMessage(g *gocui.Gui, v *gocui.View) error {
 	c.MsgChangePageChan <- struct{}{}
 
 	return nil
+}
+
+func validateEmail (e string) bool {
+    _, err := mail.ParseAddress(e)
+    return err == nil
 }
