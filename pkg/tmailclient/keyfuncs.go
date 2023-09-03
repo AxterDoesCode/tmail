@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"mime"
+	"strings"
 
 	"github.com/awesome-gocui/gocui"
 	"google.golang.org/api/gmail/v1"
@@ -178,6 +179,8 @@ func (c *Client) openReplyView(g *gocui.Gui, v *gocui.View) error {
 	v, err = setCurrentViewOnTop(g, "reply")
 	v.Editable = true
 	v.Wrap = true
+    fmt.Fprintln(v, c.CurrentMessage.ReturnPath)
+    fmt.Fprintln(v, "Replace this with the email subject")
 	if err != nil {
 		return err
 	}
@@ -199,16 +202,31 @@ func closeReplyView(g *gocui.Gui, v *gocui.View) error {
 
 func (c *Client) sendMessage(g *gocui.Gui, v *gocui.View) error {
 	var message gmail.Message
-	msgContent := v.ViewBuffer()
+	//Need to do some parsing of the viewbuffer here to extract to and subject ig
+	viewBuf := v.ViewBuffer()
+    
+    returnPath := c.CurrentMessage.ReturnPath
+    var subject, msgContent string
+	for i, line := range strings.Split(strings.TrimSuffix(viewBuf, "\n"), "\n") {
+		switch {
+        case i == 0:
+            returnPath = line
+        case i == 1:
+            subject = line
+        default: 
+            msgContent += line
+		}
+	}
 
-    mimeType := mime.TypeByExtension(".txt")
+
+	mimeType := mime.TypeByExtension(".txt")
 
 	messageStr := []byte("From: 'me'\r\n" +
 		"Reply-To: " + c.EmailAddress + "\r\n" +
 		"Return-Path: " + c.EmailAddress + "\r\n" +
-		"To: " + c.CurrentMessage.ReturnPath + "\r\n" +
+		"To: " + returnPath + "\r\n" +
 		"Content-Type: " + mimeType + "\r\n" +
-		"Subject: Testing Gmail API \r\n" +
+		"Subject: " + subject + "\r\n" +
 		"\r\n" + msgContent)
 
 	message.Raw = base64.StdEncoding.EncodeToString(messageStr)
