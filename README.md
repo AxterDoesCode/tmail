@@ -2,8 +2,10 @@
 
 TMail is a lightweight, terminal-based Gmail client written in Go. It provides a simple and efficient way to access your Gmail account, read emails, send emails, and manage your inbox, all from the command line.
 
-:-------------------------:|:-------------------------:
-![](screenshot.png)  |  ![](screenshot.png)
+|                        |                        |
+| ---------------------- | ---------------------- |
+| ![cat](screenshot.png) | ![dog](screenshot.png) |
+
 ## Features
 
 - **Read Emails:** View your Gmail inbox and read emails without leaving the terminal.
