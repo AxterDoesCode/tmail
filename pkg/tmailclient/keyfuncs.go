@@ -136,10 +136,11 @@ func (c *Client) printMessageBody(g *gocui.Gui, v *gocui.View) error {
 	}
 	currentMessage := c.MsgCacheDisplay[y]
 	c.CurrentMessage = currentMessage
-	fmt.Fprintf(v, "ID: %s\nDate: %s\nFrom: %s\nType: %s\n\n", currentMessage.Id, currentMessage.Date, currentMessage.From, currentMessage.ContentType)
-	fmt.Fprintf(v, "Reply-To: %s\nReturn-Path: %s\n", currentMessage.ReplyTo, currentMessage.ReturnPath)
+	//fmt.Fprintf(v, "ID: %s\nDate: %s\nFrom: %s\nType: %s\n\n", currentMessage.Id, currentMessage.Date, currentMessage.From, currentMessage.ContentType)
+	//fmt.Fprintf(v, "Reply-To: %s\nReturn-Path: %s\n", currentMessage.ReplyTo, currentMessage.ReturnPath)
 	//Add reply to and return path and check the output
-	fmt.Fprintf(v, "%v\n", currentMessage.LabelIds)
+	//fmt.Fprintf(v, "%v\n", currentMessage.LabelIds)
+    fmt.Fprintf(v, "From: %s\n", currentMessage.From)
 	fmt.Fprintln(v, currentMessage.Body)
 	return nil
 }

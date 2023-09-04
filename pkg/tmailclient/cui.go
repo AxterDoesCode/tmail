@@ -38,7 +38,7 @@ func (c *Client) layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "Label Label Label")
 	}
 
-	if v, err := g.SetView("main", 40, y0offset, maxX-1, maxY, gocui.LEFT); err != nil {
+	if v, err := g.SetView("main", 40, y0offset, maxX-1, maxY - 1, gocui.LEFT); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
@@ -46,7 +46,7 @@ func (c *Client) layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "Select an email")
 	}
 
-	if v, err := g.SetView("side", 0, y0offset, 40, maxY, gocui.RIGHT); err != nil {
+	if v, err := g.SetView("side", 0, y0offset, 40, maxY - 1, gocui.RIGHT); err != nil {
 		if !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
