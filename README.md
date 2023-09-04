@@ -20,4 +20,4 @@ Before installing TMail, make sure you have Go (version 1.20 or later) installed
 To install TMail, run the following command:
 
 ```shell
-go get github.com/AxterDoesCode/tmail
+go install github.com/AxterDoesCode/tmail
