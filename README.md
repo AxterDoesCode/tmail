@@ -4,7 +4,7 @@ TMail is a lightweight, terminal-based Gmail client written in Go. It provides a
 
 |                        |                        |
 | ---------------------- | ---------------------- |
-| ![cat](screenshot.png) | ![dog](screenshot.png) |
+| ![](screenshot.png) | ![](screenshot2.png) |
 
 ## Features
 
