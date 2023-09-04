@@ -1,0 +1,17 @@
+To section should also be enforced when r is pressed to fetch the current email but if i want to just write a new email then that section should be empty?
+
+This begs the question that I can't send an email if it doesn't exist, gonna need some checks to be performed for that one
+
+Should try to get multiple emails sent like by using a comma separated value
+
+Also need to get the fuckin html emails working that is gonna be a straight headache
+
+Also look at adding a help/controls menu (overlapping view, create it focus it then delete it) so yeah turns out this isn't too hard
+
+should look at content type of the email and figure it out from there (strings.contains)
+
+Then need to start looking into writing an email and maybe even writing a custom text editor for it
+
+change J and K commands to be relative to maxresults (On second thought maybe not)
+
+{"installed":{"client_id":"430545589694-ad014re2fae0ru2o69aagto31glna041.apps.googleusercontent.com","project_id":"tmail-397218","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["http://localhost"]}}
